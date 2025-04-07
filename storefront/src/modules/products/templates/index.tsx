@@ -1,5 +1,4 @@
-import React, { Suspense } from "react"
-
+import React, { Suspense, useMemo, useState } from "react"
 import ImageGallery from "@modules/products/components/image-gallery"
 import ProductActions from "@modules/products/components/product-actions"
 import ProductOnboardingCta from "@modules/products/components/product-onboarding-cta"
@@ -26,6 +25,38 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     return notFound()
   }
 
+  // Estado para el color seleccionado
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
+
+  // Filtrar imágenes basadas en el color seleccionado
+  const filteredImages = useMemo(() => {
+    if (!selectedColor || !product.images || product.images.length === 0) {
+      return product.images || []
+    }
+
+    // Filtrar las imágenes que contengan el color seleccionado en su URL
+    // Esto funciona si tus imágenes se llaman "tee-black-front", "tee-white-front", etc.
+    const filtered = product.images.filter((img) => {
+      const lowerUrl = img.url.toLowerCase()
+      const lowerColor = selectedColor.toLowerCase()
+
+      return (
+        lowerUrl.includes(`-${lowerColor}-`) ||
+        lowerUrl.includes(`-${lowerColor}.`) ||
+        lowerUrl.includes(`_${lowerColor}_`) ||
+        lowerUrl.includes(`_${lowerColor}.`)
+      )
+    })
+
+    // Si no encontramos imágenes, devolver todas (como fallback)
+    return filtered.length > 0 ? filtered : product.images
+  }, [selectedColor, product.images])
+
+  // Función para manejar el cambio de color
+  const handleColorChange = (colorValue: string | null) => {
+    setSelectedColor(colorValue)
+  }
+
   return (
     <>
       <div
@@ -37,7 +68,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           <ProductTabs product={product} />
         </div>
         <div className="block w-full relative">
-          <ImageGallery images={product?.images || []} />
+          <ImageGallery images={filteredImages} />
         </div>
         <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
           <ProductOnboardingCta />
@@ -50,7 +81,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
               />
             }
           >
-            <ProductActionsWrapper id={product.id} region={region} />
+            <ProductActionsWrapper
+              id={product.id}
+              region={region}
+              onColorChange={handleColorChange}
+            />
           </Suspense>
         </div>
       </div>

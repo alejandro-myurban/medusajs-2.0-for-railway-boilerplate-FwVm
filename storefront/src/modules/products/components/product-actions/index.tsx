@@ -13,25 +13,35 @@ import MobileActions from "./mobile-actions"
 import ProductPrice from "../product-price"
 import { addToCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
+import { on } from "events"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
+  onColorChange?: (colorValue: string | null) => void
   disabled?: boolean
 }
 
 const optionsAsKeymap = (variantOptions: any) => {
-  return variantOptions?.reduce((acc: Record<string, string | undefined>, varopt: any) => {
-    if (varopt.option && varopt.value !== null && varopt.value !== undefined) {
-      acc[varopt.option.title] = varopt.value
-    }
-    return acc
-  }, {})
+  return variantOptions?.reduce(
+    (acc: Record<string, string | undefined>, varopt: any) => {
+      if (
+        varopt.option &&
+        varopt.value !== null &&
+        varopt.value !== undefined
+      ) {
+        acc[varopt.option.title] = varopt.value
+      }
+      return acc
+    },
+    {}
+  )
 }
 
 export default function ProductActions({
   product,
   region,
+  onColorChange,
   disabled,
 }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
@@ -43,8 +53,12 @@ export default function ProductActions({
     if (product.variants?.length === 1) {
       const variantOptions = optionsAsKeymap(product.variants[0].options)
       setOptions(variantOptions ?? {})
+
+      if (variantOptions?.Color && onColorChange) {
+        onColorChange(variantOptions.Color ?? null)
+      }
     }
-  }, [product.variants])
+  }, [product.variants, onColorChange])
 
   const selectedVariant = useMemo(() => {
     if (!product.variants || product.variants.length === 0) {
@@ -63,7 +77,36 @@ export default function ProductActions({
       ...prev,
       [title]: value,
     }))
+
+    if (title === "Color" && onColorChange) {
+      onColorChange(value ?? null)
+    }
   }
+
+  useEffect(() => {
+    // Find the Color option
+    const colorOption = product.options?.find((opt) => opt.title === "Color")
+
+    // If we have a Color option and it has values and we haven't set a Color option yet
+    if (
+      colorOption &&
+      (colorOption.values?.length ?? 0) > 0 &&
+      !options.Color &&
+      onColorChange
+    ) {
+      // Set the first color value as the default
+      const firstColorValue = colorOption.values?.[0]?.value
+
+      // Update local state
+      setOptions((prev) => ({
+        ...prev,
+        Color: firstColorValue,
+      }))
+
+      // Notify parent component
+      onColorChange(firstColorValue ?? null)
+    }
+  }, [product.options, options.Color, onColorChange])
 
   // check if the selected variant is in stock
   const inStock = useMemo(() => {
