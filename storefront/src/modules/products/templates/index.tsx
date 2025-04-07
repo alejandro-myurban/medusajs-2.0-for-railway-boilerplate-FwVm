@@ -1,4 +1,3 @@
-'use client'
 import React, { Suspense, useMemo, useState } from "react"
 import ImageGallery from "@modules/products/components/image-gallery"
 import ProductActions from "@modules/products/components/product-actions"
@@ -10,56 +9,45 @@ import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-relat
 import { notFound } from "next/navigation"
 import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
+import { ColorContextProvider } from "../../../lib/context/color-content-provider"
+import ClientImageGallery from "../../products/components/image-gallery/client-image-gallery"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
   countryCode: string
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
 const ProductTemplate: React.FC<ProductTemplateProps> = ({
   product,
   region,
   countryCode,
+  searchParams,
 }) => {
   if (!product || !product.id) {
     return notFound()
   }
 
-  // Estado para el color seleccionado
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  // Get color option from product
+  const colorOption = product.options?.find(
+    (opt) => opt.title.toLowerCase() === "color"
+  )
+  const colorValues = colorOption?.values || []
 
-  // Filtrar imágenes basadas en el color seleccionado
-  const filteredImages = useMemo(() => {
-    if (!selectedColor || !product.images || product.images.length === 0) {
-      return product.images || []
-    }
+  // Validate color from parameters
+  const selectedColorParam = searchParams?.color?.toString() || ""
+  const isValidColor = colorValues.some(
+    (v) => v.value.toLowerCase() === selectedColorParam.toLowerCase()
+  )
 
-    // Filtrar las imágenes que contengan el color seleccionado en su URL
-    // Esto funciona si tus imágenes se llaman "tee-black-front", "tee-white-front", etc.
-    const filtered = product.images.filter((img) => {
-      const lowerUrl = img.url.toLowerCase()
-      const lowerColor = selectedColor.toLowerCase()
-
-      return (
-        lowerUrl.includes(`-${lowerColor}-`) ||
-        lowerUrl.includes(`-${lowerColor}.`) ||
-        lowerUrl.includes(`_${lowerColor}_`) ||
-        lowerUrl.includes(`_${lowerColor}.`)
-      )
-    })
-
-    // Si no encontramos imágenes, devolver todas (como fallback)
-    return filtered.length > 0 ? filtered : product.images
-  }, [selectedColor, product.images])
-
-  // Función para manejar el cambio de color
-  const handleColorChange = (colorValue: string | null) => {
-    setSelectedColor(colorValue)
-  }
+  // Set initial color
+  const initialColor = isValidColor
+    ? selectedColorParam
+    : colorValues[0]?.value || ""
 
   return (
-    <>
+    <ColorContextProvider initialColor={initialColor}>
       <div
         className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
         data-testid="product-container"
@@ -69,7 +57,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           <ProductTabs product={product} />
         </div>
         <div className="block w-full relative">
-          <ImageGallery images={filteredImages} />
+          <ClientImageGallery images={product.images || []} />
         </div>
         <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
           <ProductOnboardingCta />
@@ -85,7 +73,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <ProductActionsWrapper
               id={product.id}
               region={region}
-              onColorChange={handleColorChange}
+              colorValues={colorValues.map((v) => v.value)}
             />
           </Suspense>
         </div>
@@ -98,7 +86,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           <RelatedProducts product={product} countryCode={countryCode} />
         </Suspense>
       </div>
-    </>
+    </ColorContextProvider>
   )
 }
 

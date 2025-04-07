@@ -8,11 +8,11 @@ import ProductActions from "@modules/products/components/product-actions"
 export default async function ProductActionsWrapper({
   id,
   region,
-  onColorChange,
+  colorValues,
 }: {
   id: string
   region: HttpTypes.StoreRegion
-  onColorChange?: (colorValue: string | null) => void
+  colorValues: string[]
 }) {
   const [product] = await getProductsById({
     ids: [id],
@@ -22,12 +22,12 @@ export default async function ProductActionsWrapper({
   if (!product) {
     return null
   }
-
+  
   return (
     <ProductActions
       product={product}
       region={region}
-      onColorChange={onColorChange}
+      colorValues={colorValues}
     />
   )
 }

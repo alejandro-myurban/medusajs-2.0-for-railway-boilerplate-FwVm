@@ -2,7 +2,7 @@
 
 import { Button } from "@medusajs/ui"
 import { isEqual } from "lodash"
-import { useParams } from "next/navigation"
+import { useParams, usePathname, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { useIntersection } from "@lib/hooks/use-in-view"
@@ -14,11 +14,12 @@ import ProductPrice from "../product-price"
 import { addToCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 import { on } from "events"
+import { useRouter } from "next/router"
+import { useColorContext } from "@lib/context/color-content-provider"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
-  onColorChange?: (colorValue: string | null) => void
   disabled?: boolean
 }
 
@@ -41,30 +42,45 @@ const optionsAsKeymap = (variantOptions: any) => {
 export default function ProductActions({
   product,
   region,
-  onColorChange,
   disabled,
 }: ProductActionsProps) {
+  const { setSelectedColor } = useColorContext()
   const [options, setOptions] = useState<Record<string, string | undefined>>({})
   const [isAdding, setIsAdding] = useState(false)
   const countryCode = useParams().countryCode as string
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-  // If there is only 1 variant, preselect the options
+  const initialColor = useMemo(() => {
+    const urlColor = searchParams?.get("color")
+    const colorOption = product.options?.find((opt) => opt.title === "Color")
+    const validColors = colorOption?.values?.map((v) => v.value) || []
+
+    // Validate URL color exists in product options
+    if (urlColor && validColors.includes(urlColor)) {
+      return urlColor
+    }
+
+    // Fallback to first available color
+    return validColors[0] || ""
+  }, [searchParams, product.options])
+
   useEffect(() => {
     if (product.variants?.length === 1) {
       const variantOptions = optionsAsKeymap(product.variants[0].options)
       setOptions(variantOptions ?? {})
 
-      if (variantOptions?.Color && onColorChange) {
-        onColorChange(variantOptions.Color ?? null)
+      if (variantOptions?.Color) {
+        setSelectedColor(variantOptions.Color) // Use context instead
       }
     }
-  }, [product.variants, onColorChange])
+  }, [product.variants, setSelectedColor])
 
   const selectedVariant = useMemo(() => {
     if (!product.variants || product.variants.length === 0) {
       return
     }
-
     return product.variants.find((v) => {
       const variantOptions = optionsAsKeymap(v.options)
       return isEqual(variantOptions, options)
@@ -78,35 +94,20 @@ export default function ProductActions({
       [title]: value,
     }))
 
-    if (title === "Color" && onColorChange) {
-      onColorChange(value ?? null)
+    if (title === "Color") {
+      setSelectedColor(value)
     }
   }
 
   useEffect(() => {
-    // Find the Color option
     const colorOption = product.options?.find((opt) => opt.title === "Color")
-
-    // If we have a Color option and it has values and we haven't set a Color option yet
-    if (
-      colorOption &&
-      (colorOption.values?.length ?? 0) > 0 &&
-      !options.Color &&
-      onColorChange
-    ) {
-      // Set the first color value as the default
-      const firstColorValue = colorOption.values?.[0]?.value
-
-      // Update local state
+    if (colorOption?.values?.length && !options.Color) {
       setOptions((prev) => ({
         ...prev,
-        Color: firstColorValue,
+        Color: initialColor,
       }))
-
-      // Notify parent component
-      onColorChange(firstColorValue ?? null)
     }
-  }, [product.options, options.Color, onColorChange])
+  }, [product.options, initialColor])
 
   // check if the selected variant is in stock
   const inStock = useMemo(() => {
@@ -157,20 +158,18 @@ export default function ProductActions({
         <div>
           {(product.variants?.length ?? 0) > 1 && (
             <div className="flex flex-col gap-y-4">
-              {(product.options || []).map((option) => {
-                return (
-                  <div key={option.id}>
-                    <OptionSelect
-                      option={option}
-                      current={options[option.title ?? ""]}
-                      updateOption={setOptionValue}
-                      title={option.title ?? ""}
-                      data-testid="product-options"
-                      disabled={!!disabled || isAdding}
-                    />
-                  </div>
-                )
-              })}
+              {(product.options || []).map((option) => (
+                <div key={option.id}>
+                  <OptionSelect
+                    option={option}
+                    current={options[option.title ?? ""]}
+                    updateOption={setOptionValue}
+                    title={option.title ?? ""}
+                    data-testid="product-options"
+                    disabled={!!disabled || isAdding}
+                  />
+                </div>
+              ))}
               <Divider />
             </div>
           )}
