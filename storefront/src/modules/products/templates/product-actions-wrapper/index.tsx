@@ -27,7 +27,6 @@ export default async function ProductActionsWrapper({
     <ProductActions
       product={product}
       region={region}
-      colorValues={colorValues}
     />
   )
 }

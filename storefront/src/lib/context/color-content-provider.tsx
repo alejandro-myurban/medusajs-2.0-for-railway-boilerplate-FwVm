@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useState, useEffect, Suspense } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 type ColorContextType = {
@@ -20,13 +20,14 @@ export const useColorContext = () => {
   return context
 }
 
-export const ColorContextProvider = ({
+// Create an inner component that uses the hooks
+function ColorContextInner({
   children,
   initialColor,
 }: {
   children: React.ReactNode
   initialColor: string
-}) => {
+}) {
   const [selectedColor, setSelectedColor] = useState(initialColor)
   const router = useRouter()
   const pathname = usePathname()
@@ -55,5 +56,22 @@ export const ColorContextProvider = ({
     >
       {children}
     </ColorContext.Provider>
+  )
+}
+
+// The main provider component with Suspense
+export const ColorContextProvider = ({
+  children,
+  initialColor,
+}: {
+  children: React.ReactNode
+  initialColor: string
+}) => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ColorContextInner initialColor={initialColor}>
+        {children}
+      </ColorContextInner>
+    </Suspense>
   )
 }
