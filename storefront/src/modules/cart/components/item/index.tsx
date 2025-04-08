@@ -136,18 +136,18 @@ const Item = ({ item, type = "full" }: ItemProps) => {
   return (
     <Table.Row className="w-full" data-testid="product-row">
       <Table.Cell className="!pl-0 p-4 w-24">
-        <LocalizedClientLink
-          href={`/products/${handle}`}
-          className={clx("flex", {
-            "w-16": type === "preview",
-            "small:w-24 w-12": type === "full",
-          })}
-        >
-          <Thumbnail
-            thumbnail={imageUrl}
-            images={productData?.images || []}
-            size="square"
-          />
+        <LocalizedClientLink href={`/products/${handle}`}>
+          {loading ? (
+            <div className="w-16 h-16 flex items-center justify-center">
+              <Spinner />
+            </div>
+          ) : (
+            <Thumbnail
+              thumbnail={imageUrl}
+              images={productData?.images || []}
+              size="square"
+            />
+          )}
         </LocalizedClientLink>
       </Table.Cell>
 
