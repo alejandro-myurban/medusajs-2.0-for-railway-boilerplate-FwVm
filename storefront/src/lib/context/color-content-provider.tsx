@@ -39,9 +39,9 @@ export const ColorContextProvider = ({
     try {
       const params = new URLSearchParams(searchParams?.toString() || "")
       if (color) {
-        params.set("color", color)
+        params.set("option", color)
       } else {
-        params.delete("color")
+        params.delete("option")
       }
 
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })

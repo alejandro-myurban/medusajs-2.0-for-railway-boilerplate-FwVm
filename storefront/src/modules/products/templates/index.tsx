@@ -10,6 +10,7 @@ import ProductActionsWrapper from "./product-actions-wrapper"
 import { HttpTypes } from "@medusajs/types"
 import { ColorContextProvider } from "../../../lib/context/color-content-provider"
 import ClientImageGallery from "../../products/components/image-gallery/client-image-gallery"
+import Spinner from "@modules/common/icons/spinner"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -35,7 +36,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   const optionValues = variantOption?.values || []
 
   // Validate option value from parameters
-  const selectedParam = searchParams?.color?.toString() || ""
+  const selectedParam = searchParams?.option?.toString() || ""
   const isValidOption = optionValues.some((v) => v.value === selectedParam)
 
   // Set initial option value
@@ -47,7 +48,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   try {
     return (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div>
+            <Spinner />
+          </div>
+        }
+      >
         <ColorContextProvider initialColor={initialValue}>
           <div
             className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
