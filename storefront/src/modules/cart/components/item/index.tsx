@@ -93,7 +93,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     console.log("Buscando imágenes para color:", colorValue)
 
     // Filtra las imágenes que contengan el color en su URL
-    const colorImages = product.images.filter((img) =>
+    const colorImages = product.images.filter((img: any) =>
       img.url.toLowerCase().includes(colorValue)
     )
 
