@@ -26,6 +26,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
   const [error, setError] = useState<string | null>(null)
   const [productData, setProductData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [imageUrl, setImageUrl] = useState(item.thumbnail)
 
   console.log("item!!!!!!!", item)
   const { handle } = item.variant?.product ?? {}
@@ -52,7 +53,17 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     }
 
     getProductData()
+    const imageUrl = getVariantImage()
+    console.log("URL final a usar en Thumbnail:", imageUrl)
   }, [])
+
+  useEffect(() => {
+    if (productData) {
+      const newImageUrl = getVariantImage()
+      console.log("URL final a usar en Thumbnail:", newImageUrl)
+      setImageUrl(newImageUrl)
+    }
+  }, [productData])
 
   const getVariantImage = () => {
     console.log("Ejecutando getVariantImage")
@@ -123,9 +134,6 @@ const Item = ({ item, type = "full" }: ItemProps) => {
   // TODO: Update this to grab the actual max inventory
   const maxQtyFromInventory = 10
   const maxQuantity = item.variant?.manage_inventory ? 10 : maxQtyFromInventory
-
-  const imageUrl = getVariantImage()
-  console.log("URL final a usar en Thumbnail:", imageUrl)
 
   return (
     <Table.Row className="w-full" data-testid="product-row">
