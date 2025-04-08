@@ -1,11 +1,12 @@
-"use client"
-
+// Update ColorContextProvider.tsx
 import React, { createContext, useContext, useState, useEffect, Suspense } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 type ColorContextType = {
   selectedColor: string
   setSelectedColor: (color: string) => void
+  optionType: string
+  setOptionType: (type: string) => void
 }
 
 const ColorContext = createContext<ColorContextType | undefined>(undefined)
@@ -20,15 +21,17 @@ export const useColorContext = () => {
   return context
 }
 
-// Create an inner component that uses the hooks
 function ColorContextInner({
   children,
   initialColor,
+  initialOptionType = "color",
 }: {
   children: React.ReactNode
   initialColor: string
+  initialOptionType?: string
 }) {
   const [selectedColor, setSelectedColor] = useState(initialColor)
+  const [optionType, setOptionType] = useState(initialOptionType)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -52,6 +55,8 @@ function ColorContextInner({
       value={{
         selectedColor,
         setSelectedColor: updateColor,
+        optionType,
+        setOptionType,
       }}
     >
       {children}
@@ -59,17 +64,18 @@ function ColorContextInner({
   )
 }
 
-// The main provider component with Suspense
 export const ColorContextProvider = ({
   children,
   initialColor,
+  initialOptionType,
 }: {
   children: React.ReactNode
   initialColor: string
+  initialOptionType?: string
 }) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ColorContextInner initialColor={initialColor}>
+      <ColorContextInner initialColor={initialColor} initialOptionType={initialOptionType}>
         {children}
       </ColorContextInner>
     </Suspense>

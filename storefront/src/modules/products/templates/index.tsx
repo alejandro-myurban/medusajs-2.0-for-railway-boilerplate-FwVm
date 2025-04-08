@@ -30,63 +30,78 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   }
 
   // Get color option from product
-  const colorOption = product.options?.find(
-    (opt) => opt.title.toLowerCase() === "color" || opt.title.toLowerCase() === "base"
-  )
-  const colorValues = colorOption?.values || []
+  const ProductTemplate: React.FC<ProductTemplateProps> = ({
+    product,
+    region,
+    countryCode,
+    searchParams,
+  }) => {
+    if (!product || !product.id) {
+      return notFound()
+    }
 
-  // Validate color from parameters
-  const selectedColorParam = searchParams?.color?.toString() || ""
-  const isValidColor = colorValues.some(
-    (v) => v.value.toLowerCase() === selectedColorParam.toLowerCase()
-  )
+    // Find the variant option that determines images (color, base, etc.)
+    const imageOption = product.options?.find(
+      (opt) =>
+        opt.title.toLowerCase() === "color" ||
+        opt.title.toLowerCase() === "base"
+    )
+    const optionType = imageOption?.title.toLowerCase() || "color"
+    const optionValues = imageOption?.values || []
 
-  // Set initial color
-  const initialColor = isValidColor
-    ? selectedColorParam
-    : colorValues[0]?.value || ""
+    // Validate color from parameters
+    const selectedOptionParam = searchParams?.color?.toString() || ""
+    const isValidOption = optionValues.some(
+      (v) => v.value.toLowerCase() === selectedOptionParam.toLowerCase()
+    )
 
-  return (
-    <ColorContextProvider initialColor={initialColor}>
-      <div
-        className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
-        data-testid="product-container"
+    // Set initial option value
+    const initialValue = isValidOption
+      ? selectedOptionParam
+      : optionValues[0]?.value || ""
+
+    return (
+      <ColorContextProvider
+        initialColor={initialValue}
+        initialOptionType={optionType}
       >
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
-          <ProductInfo product={product} />
-          <ProductTabs product={product} />
+        <div
+          className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
+          data-testid="product-container"
+        >
+          <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
+            <ProductInfo product={product} />
+            <ProductTabs product={product} />
+          </div>
+          <div className="block w-full relative">
+            <ClientImageGallery images={product.images || []} />
+          </div>
+          <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
+            <ProductOnboardingCta />
+            <Suspense
+              fallback={
+                <ProductActions
+                  disabled={true}
+                  product={product}
+                  region={region}
+                />
+              }
+            >
+              <ProductActionsWrapper id={product.id} region={region} />
+            </Suspense>
+          </div>
         </div>
-        <div className="block w-full relative">
-          <ClientImageGallery images={product.images || []} />
-        </div>
-        <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
-          <ProductOnboardingCta />
-          <Suspense
-            fallback={
-              <ProductActions
-                disabled={true}
-                product={product}
-                region={region}
-              />
-            }
-          >
-            <ProductActionsWrapper
-              id={product.id}
-              region={region}
-            />
+        <div
+          className="content-container my-16 small:my-32"
+          data-testid="related-products-container"
+        >
+          <Suspense fallback={<SkeletonRelatedProducts />}>
+            <RelatedProducts product={product} countryCode={countryCode} />
           </Suspense>
         </div>
-      </div>
-      <div
-        className="content-container my-16 small:my-32"
-        data-testid="related-products-container"
-      >
-        <Suspense fallback={<SkeletonRelatedProducts />}>
-          <RelatedProducts product={product} countryCode={countryCode} />
-        </Suspense>
-      </div>
-    </ColorContextProvider>
-  )
+      </ColorContextProvider>
+    )
+  }
 }
 
 export default ProductTemplate

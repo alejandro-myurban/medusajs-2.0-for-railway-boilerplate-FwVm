@@ -48,7 +48,9 @@ export default function ProductActions({
 
   const initialColor = useMemo(() => {
     const urlColor = searchParams?.get("color")
-    const colorOption = product.options?.find((opt) => opt.title === "Color" || opt.title === "Base")
+    const colorOption = product.options?.find(
+      (opt) => opt.title === "Color" || opt.title === "Base"
+    )
     const validColors = colorOption?.values?.map((v) => v.value) || []
 
     // Validate URL color exists in product options
@@ -88,17 +90,24 @@ export default function ProductActions({
       [title]: value,
     }))
 
-    if (title === "Color") {
+    // Check if this is our image-relevant option (color or base)
+    const lowerTitle = title.toLowerCase()
+    if (lowerTitle === "color" || lowerTitle === "base") {
       setSelectedColor(value)
     }
   }
 
   useEffect(() => {
-    const colorOption = product.options?.find((opt) => opt.title === "Color" || opt.title === "Base")
-    if (colorOption?.values?.length && !options.Color) {
+    const imageOption = product.options?.find(
+      (opt) =>
+        opt.title.toLowerCase() === "color" ||
+        opt.title.toLowerCase() === "base"
+    )
+
+    if (imageOption?.values?.length && !options[imageOption.title]) {
       setOptions((prev) => ({
         ...prev,
-        Color: initialColor,
+        [imageOption.title]: initialColor,
       }))
     }
   }, [product.options, initialColor])

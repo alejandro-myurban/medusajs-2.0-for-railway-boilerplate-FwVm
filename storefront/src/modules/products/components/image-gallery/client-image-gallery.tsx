@@ -9,7 +9,7 @@ type ClientImageGalleryProps = {
 }
 
 export default function ClientImageGallery({ images }: ClientImageGalleryProps) {
-  const { selectedColor } = useColorContext()
+  const { selectedColor, optionType } = useColorContext()
   
   // Filter images based on selected color
   const filteredImages = images.filter((img) => {
