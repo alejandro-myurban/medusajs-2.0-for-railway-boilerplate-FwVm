@@ -88,14 +88,19 @@ export default function ProductActions({
 
   // update the options when a variant is selected
   const setOptionValue = (title: string, value: string) => {
-    setOptions((prev) => ({
-      ...prev,
-      [title]: value,
-    }))
+    try {
+      setOptions((prev) => ({
+        ...prev,
+        [title]: value,
+      }))
 
-    // Actualiza el contexto si la opción es "Base" o "Color"
-    if (title === "Base" || title === "Color") {
-      setSelectedColor(value)
+      // Update context if it's a relevant option
+      if (title === "Base" || title === "Color") {
+        console.log(`Setting ${title} option to:`, value)
+        setSelectedColor(value)
+      }
+    } catch (error) {
+      console.error("Error setting option value:", error)
     }
   }
 

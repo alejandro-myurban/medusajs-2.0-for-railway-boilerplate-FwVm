@@ -1,5 +1,4 @@
-import React, { Suspense, useMemo, useState } from "react"
-import ImageGallery from "@modules/products/components/image-gallery"
+import React, { Suspense } from "react"
 import ProductActions from "@modules/products/components/product-actions"
 import ProductOnboardingCta from "@modules/products/components/product-onboarding-cta"
 import ProductTabs from "@modules/products/components/product-tabs"
@@ -29,39 +28,28 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     return notFound()
   }
 
-  // Get color option from product
-  const ProductTemplate: React.FC<ProductTemplateProps> = ({
-    product,
-    region,
-    countryCode,
-    searchParams,
-  }) => {
-    if (!product || !product.id) {
-      return notFound()
-    }
+  // Get color or base option from product
+  const variantOption = product.options?.find(
+    (opt) => opt.title === "Color" || opt.title === "Base"
+  )
+  const optionValues = variantOption?.values || []
 
-    // Find the variant option that determines images (color, base, etc.)
-    const colorOption = product.options?.find(
-      (opt) => opt.title === "Color" || opt.title === "Base"
-    )
-    const colorValues = colorOption?.values || []
+  // Validate option value from parameters
+  const selectedParam = searchParams?.color?.toString() || ""
+  const isValidOption = optionValues.some(
+    (v) => v.value === selectedParam
+  )
 
-    // Validate color from parameters
-    const selectedColorParam = searchParams?.color?.toString() || ""
-    const isValidColor = colorValues.some((v) => v.value === selectedColorParam)
+  // Set initial option value
+  const initialValue = isValidOption
+    ? selectedParam
+    : optionValues[0]?.value || ""
 
-    const initialColor = isValidColor
-      ? selectedColorParam
-      : colorValues[0]?.value || ""
+  console.log("ProductTemplate rendering with initialValue:", initialValue)
 
-    console.log("Initial color:", initialColor)
-    console.log(
-      "Color values:",
-      colorValues.map((v) => v.value)
-    )
-
+  try {
     return (
-      <ColorContextProvider initialColor={initialColor}>
+      <ColorContextProvider initialColor={initialValue}>
         <div
           className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
           data-testid="product-container"
@@ -84,7 +72,10 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 />
               }
             >
-              <ProductActionsWrapper id={product.id} region={region} />
+              <ProductActionsWrapper
+                id={product.id}
+                region={region}
+              />
             </Suspense>
           </div>
         </div>
@@ -98,6 +89,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         </div>
       </ColorContextProvider>
     )
+  } catch (error) {
+    console.error("Error rendering ProductTemplate:", error)
+    return <div>Error loading product. Please try again.</div>
   }
 }
 

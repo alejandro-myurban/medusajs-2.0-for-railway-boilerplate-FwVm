@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, Suspense } from "react"
+import React, { createContext, useContext, useState } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 type ColorContextType = {
@@ -20,13 +20,13 @@ export const useColorContext = () => {
   return context
 }
 
-function ColorContextInner({
+export const ColorContextProvider = ({
   children,
-  initialColor,
+  initialColor = "",
 }: {
   children: React.ReactNode
-  initialColor: string
-}) {
+  initialColor?: string
+}) => {
   const [selectedColor, setSelectedColor] = useState(initialColor)
   const router = useRouter()
   const pathname = usePathname()
@@ -36,14 +36,18 @@ function ColorContextInner({
   const updateColor = (color: string) => {
     setSelectedColor(color)
 
-    const params = new URLSearchParams(searchParams?.toString() || "")
-    if (color) {
-      params.set("color", color)
-    } else {
-      params.delete("color")
-    }
+    try {
+      const params = new URLSearchParams(searchParams?.toString() || "")
+      if (color) {
+        params.set("color", color)
+      } else {
+        params.delete("color")
+      }
 
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    } catch (error) {
+      console.error("Error updating URL:", error)
+    }
   }
 
   return (
@@ -55,21 +59,5 @@ function ColorContextInner({
     >
       {children}
     </ColorContext.Provider>
-  )
-}
-
-export const ColorContextProvider = ({
-  children,
-  initialColor,
-}: {
-  children: React.ReactNode
-  initialColor: string
-}) => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <ColorContextInner initialColor={initialColor}>
-        {children}
-      </ColorContextInner>
-    </Suspense>
   )
 }
