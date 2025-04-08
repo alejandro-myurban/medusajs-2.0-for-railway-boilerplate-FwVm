@@ -41,30 +41,27 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     }
 
     // Find the variant option that determines images (color, base, etc.)
-    const imageOption = product.options?.find(
-      (opt) =>
-        opt.title.toLowerCase() === "color" ||
-        opt.title.toLowerCase() === "base"
+    const colorOption = product.options?.find(
+      (opt) => opt.title === "Color" || opt.title === "Base"
     )
-    const optionType = imageOption?.title.toLowerCase() || "color"
-    const optionValues = imageOption?.values || []
+    const colorValues = colorOption?.values || []
 
     // Validate color from parameters
-    const selectedOptionParam = searchParams?.color?.toString() || ""
-    const isValidOption = optionValues.some(
-      (v) => v.value.toLowerCase() === selectedOptionParam.toLowerCase()
+    const selectedColorParam = searchParams?.color?.toString() || ""
+    const isValidColor = colorValues.some((v) => v.value === selectedColorParam)
+
+    const initialColor = isValidColor
+      ? selectedColorParam
+      : colorValues[0]?.value || ""
+
+    console.log("Initial color:", initialColor)
+    console.log(
+      "Color values:",
+      colorValues.map((v) => v.value)
     )
 
-    // Set initial option value
-    const initialValue = isValidOption
-      ? selectedOptionParam
-      : optionValues[0]?.value || ""
-
     return (
-      <ColorContextProvider
-        initialColor={initialValue}
-        initialOptionType={optionType}
-      >
+      <ColorContextProvider initialColor={initialColor}>
         <div
           className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
           data-testid="product-container"

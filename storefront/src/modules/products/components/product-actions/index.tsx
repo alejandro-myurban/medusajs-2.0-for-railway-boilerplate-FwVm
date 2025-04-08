@@ -67,8 +67,11 @@ export default function ProductActions({
       const variantOptions = optionsAsKeymap(product.variants[0].options)
       setOptions(variantOptions ?? {})
 
-      if (variantOptions?.Color) {
-        setSelectedColor(variantOptions.Color) // Use context instead
+      // Actualiza el contexto si hay una opción "Base" o "Color"
+      if (variantOptions?.Base) {
+        setSelectedColor(variantOptions.Base)
+      } else if (variantOptions?.Color) {
+        setSelectedColor(variantOptions.Color)
       }
     }
   }, [product.variants, setSelectedColor])
@@ -90,25 +93,28 @@ export default function ProductActions({
       [title]: value,
     }))
 
-    // Check if this is our image-relevant option (color or base)
-    const lowerTitle = title.toLowerCase()
-    if (lowerTitle === "color" || lowerTitle === "base") {
+    // Actualiza el contexto si la opción es "Base" o "Color"
+    if (title === "Base" || title === "Color") {
       setSelectedColor(value)
     }
   }
 
   useEffect(() => {
-    const imageOption = product.options?.find(
-      (opt) =>
-        opt.title.toLowerCase() === "color" ||
-        opt.title.toLowerCase() === "base"
-    )
+    const baseOption = product.options?.find((opt) => opt.title === "Base")
+    const colorOption = product.options?.find((opt) => opt.title === "Color")
 
-    if (imageOption?.values?.length && !options[imageOption.title]) {
+    if (baseOption?.values?.length && !options.Base) {
       setOptions((prev) => ({
         ...prev,
-        [imageOption.title]: initialColor,
+        Base: initialColor,
       }))
+      setSelectedColor(initialColor)
+    } else if (colorOption?.values?.length && !options.Color) {
+      setOptions((prev) => ({
+        ...prev,
+        Color: initialColor,
+      }))
+      setSelectedColor(initialColor)
     }
   }, [product.options, initialColor])
 
