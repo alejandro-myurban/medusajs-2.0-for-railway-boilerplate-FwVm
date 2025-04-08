@@ -53,8 +53,6 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     }
 
     getProductData()
-    const imageUrl = getVariantImage()
-    console.log("URL final a usar en Thumbnail:", imageUrl)
   }, [])
 
   useEffect(() => {
@@ -67,23 +65,23 @@ const Item = ({ item, type = "full" }: ItemProps) => {
 
   const getVariantImage = () => {
     console.log("Ejecutando getVariantImage")
+    const product = Array.isArray(productData) ? productData[0] : productData
 
     // Si no hay datos de producto o imágenes, usa el thumbnail
-    if (!productData || !productData.images || !productData.images.length) {
+    if (!product || !product.images || !product.images.length) {
       console.log("Usando thumbnail por defecto:", item.thumbnail)
       return item.thumbnail
     }
 
-    // Encuentra el valor del color de las opciones de la variante
+    // Encuentra el valor del color en las opciones de la variante
     const colorOption = item.variant?.options?.find(
       (opt) => opt.option?.title?.toLowerCase() === "color"
     )
 
     console.log("Opción de color encontrada:", colorOption)
-
     const colorValue = colorOption?.value?.toLowerCase()
 
-    // Si no encuentra un color, usa el thumbnail
+    // Si no se encuentra un valor de color, usa el thumbnail por defecto
     if (!colorValue) {
       console.log(
         "No se encontró valor de color, usando thumbnail:",
@@ -94,20 +92,20 @@ const Item = ({ item, type = "full" }: ItemProps) => {
 
     console.log("Buscando imágenes para color:", colorValue)
 
-    // Encuentra imágenes que contengan el color en su URL
-    const colorImages = productData.images.filter((img) =>
+    // Filtra las imágenes que contengan el color en su URL
+    const colorImages = product.images.filter((img) =>
       img.url.toLowerCase().includes(colorValue)
     )
 
     console.log("Imágenes encontradas para este color:", colorImages)
 
-    // Si encuentra imágenes para este color, usa la primera
+    // Si se encuentran imágenes para el color, retorna la primera
     if (colorImages.length > 0) {
       console.log("URL de imagen seleccionada:", colorImages[0].url)
-      return colorImages[0].url // Asegúrate de devolver solo la URL
+      return colorImages[0].url
     }
 
-    // Si no encuentra imágenes para este color, usa el thumbnail
+    // Si no se encuentra ninguna imagen para el color, usa el thumbnail
     console.log(
       "Sin imágenes para este color, usando thumbnail:",
       item.thumbnail
