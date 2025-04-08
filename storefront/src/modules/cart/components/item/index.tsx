@@ -63,6 +63,56 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     }
   }, [productData])
 
+  // const getVariantImage = () => {
+  //   console.log("Ejecutando getVariantImage")
+  //   const product = Array.isArray(productData) ? productData[0] : productData
+
+  //   // Si no hay datos de producto o imágenes, usa el thumbnail
+  //   if (!product || !product.images || !product.images.length) {
+  //     console.log("Usando thumbnail por defecto:", item.thumbnail)
+  //     return item.thumbnail
+  //   }
+
+  //   // Encuentra el valor del color en las opciones de la variante
+  //   const colorOption = item.variant?.options?.find(
+  //     (opt) => opt.option?.title?.toLowerCase() === "color"
+  //   )
+
+  //   console.log("Opción de color encontrada:", colorOption)
+  //   const colorValue = colorOption?.value?.toLowerCase()
+
+  //   // Si no se encuentra un valor de color, usa el thumbnail por defecto
+  //   if (!colorValue) {
+  //     console.log(
+  //       "No se encontró valor de color, usando thumbnail:",
+  //       item.thumbnail
+  //     )
+  //     return item.thumbnail
+  //   }
+
+  //   console.log("Buscando imágenes para color:", colorValue)
+
+  //   // Filtra las imágenes que contengan el color en su URL
+  //   const colorImages = product.images.filter((img: any) =>
+  //     img.url.toLowerCase().includes(colorValue)
+  //   )
+
+  //   console.log("Imágenes encontradas para este color:", colorImages)
+
+  //   // Si se encuentran imágenes para el color, retorna la primera
+  //   if (colorImages.length > 0) {
+  //     console.log("URL de imagen seleccionada:", colorImages[0].url)
+  //     return colorImages[0].url
+  //   }
+
+  //   // Si no se encuentra ninguna imagen para el color, usa el thumbnail
+  //   console.log(
+  //     "Sin imágenes para este color, usando thumbnail:",
+  //     item.thumbnail
+  //   )
+  //   return item.thumbnail
+  // }
+
   const getVariantImage = () => {
     console.log("Ejecutando getVariantImage")
     const product = Array.isArray(productData) ? productData[0] : productData
@@ -74,40 +124,41 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     }
 
     // Encuentra el valor del color en las opciones de la variante
-    const colorOption = item.variant?.options?.find(
-      (opt) => opt.option?.title?.toLowerCase() === "color"
+    // Busca la opción "Base"
+    const baseOption = item.variant?.options?.find(
+      (opt) => (opt.option?.title)?.toLowerCase() === "base"
     )
+    console.log("Opción Base encontrada:", baseOption)
 
-    console.log("Opción de color encontrada:", colorOption)
-    const colorValue = colorOption?.value?.toLowerCase()
-
-    // Si no se encuentra un valor de color, usa el thumbnail por defecto
-    if (!colorValue) {
+    // Extrae el valor, por ejemplo "con base" o "sin base"
+    const baseValue = baseOption?.value?.toLowerCase()
+    if (!baseValue) {
       console.log(
-        "No se encontró valor de color, usando thumbnail:",
+        "No se encontró valor para Base, usando thumbnail:",
         item.thumbnail
       )
       return item.thumbnail
     }
 
-    console.log("Buscando imágenes para color:", colorValue)
+    // Extrae solo la primera palabra, que se espera que sea "con" o "sin"
+    const baseKeyWord = baseValue.split(" ")[0]
+    console.log("Palabra base extraída:", baseKeyWord)
 
-    // Filtra las imágenes que contengan el color en su URL
-    const colorImages = product.images.filter((img: any) =>
-      img.url.toLowerCase().includes(colorValue)
-    )
+    // Crea una expresión regular para buscar la palabra exacta con límites (word boundaries)
+    const regex = new RegExp(`\\b${baseKeyWord}\\b`, "i")
 
-    console.log("Imágenes encontradas para este color:", colorImages)
+    // Filtra las imágenes utilizando la expresión regular
+    const baseImages = product.images.filter((img: any) => regex.test(img.url))
+    console.log("Imágenes encontradas para la palabra base:", baseImages)
 
-    // Si se encuentran imágenes para el color, retorna la primera
-    if (colorImages.length > 0) {
-      console.log("URL de imagen seleccionada:", colorImages[0].url)
-      return colorImages[0].url
+    // Si hay imágenes que coinciden, devuelve la primera; de lo contrario, usa el thumbnail original
+    if (baseImages.length > 0) {
+      console.log("URL de imagen seleccionada:", baseImages[0].url)
+      return baseImages[0].url
     }
 
-    // Si no se encuentra ninguna imagen para el color, usa el thumbnail
     console.log(
-      "Sin imágenes para este color, usando thumbnail:",
+      "No se encontraron imágenes para la palabra base, usando thumbnail:",
       item.thumbnail
     )
     return item.thumbnail
