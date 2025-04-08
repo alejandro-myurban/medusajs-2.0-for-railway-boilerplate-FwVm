@@ -36,9 +36,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   // Validate option value from parameters
   const selectedParam = searchParams?.color?.toString() || ""
-  const isValidOption = optionValues.some(
-    (v) => v.value === selectedParam
-  )
+  const isValidOption = optionValues.some((v) => v.value === selectedParam)
 
   // Set initial option value
   const initialValue = isValidOption
@@ -49,45 +47,44 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   try {
     return (
-      <ColorContextProvider initialColor={initialValue}>
-        <div
-          className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
-          data-testid="product-container"
-        >
-          <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
-            <ProductInfo product={product} />
-            <ProductTabs product={product} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ColorContextProvider initialColor={initialValue}>
+          <div
+            className="content-container flex flex-col small:flex-row small:items-start py-6 relative"
+            data-testid="product-container"
+          >
+            <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
+              <ProductInfo product={product} />
+              <ProductTabs product={product} />
+            </div>
+            <div className="block w-full relative">
+              <ClientImageGallery images={product.images || []} />
+            </div>
+            <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
+              <ProductOnboardingCta />
+              <Suspense
+                fallback={
+                  <ProductActions
+                    disabled={true}
+                    product={product}
+                    region={region}
+                  />
+                }
+              >
+                <ProductActionsWrapper id={product.id} region={region} />
+              </Suspense>
+            </div>
           </div>
-          <div className="block w-full relative">
-            <ClientImageGallery images={product.images || []} />
-          </div>
-          <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-12">
-            <ProductOnboardingCta />
-            <Suspense
-              fallback={
-                <ProductActions
-                  disabled={true}
-                  product={product}
-                  region={region}
-                />
-              }
-            >
-              <ProductActionsWrapper
-                id={product.id}
-                region={region}
-              />
+          <div
+            className="content-container my-16 small:my-32"
+            data-testid="related-products-container"
+          >
+            <Suspense fallback={<SkeletonRelatedProducts />}>
+              <RelatedProducts product={product} countryCode={countryCode} />
             </Suspense>
           </div>
-        </div>
-        <div
-          className="content-container my-16 small:my-32"
-          data-testid="related-products-container"
-        >
-          <Suspense fallback={<SkeletonRelatedProducts />}>
-            <RelatedProducts product={product} countryCode={countryCode} />
-          </Suspense>
-        </div>
-      </ColorContextProvider>
+        </ColorContextProvider>
+      </Suspense>
     )
   } catch (error) {
     console.error("Error rendering ProductTemplate:", error)
