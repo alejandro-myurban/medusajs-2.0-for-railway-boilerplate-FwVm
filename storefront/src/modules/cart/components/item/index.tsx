@@ -13,7 +13,8 @@ import LineItemUnitPrice from "@modules/common/components/line-item-unit-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Spinner from "@modules/common/icons/spinner"
 import Thumbnail from "@modules/products/components/thumbnail"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { getProductsById } from "@lib/data/products"
 
 type ItemProps = {
   item: HttpTypes.StoreCartLineItem
@@ -23,9 +24,58 @@ type ItemProps = {
 const Item = ({ item, type = "full" }: ItemProps) => {
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [productData, setProductData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
   console.log("item!!!!!!!", item)
   const { handle } = item.variant?.product ?? {}
+  const productId = [item.product?.id]
+  console.log("id!!!!!!!", productId)
+
+  useEffect(() => {
+    const getProductData = async () => {
+      if (productId) {
+        setLoading(true)
+        try {
+          const data = await getProductsById({
+            ids: productId.filter(Boolean) as string[],
+            regionId: "default-region-id",
+          })
+          console.log("data", data)
+          setProductData(data)
+        } catch (err) {
+          console.error("Error fetching product data:", err)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
+    getProductData()
+  }, [productId])
+
+  const getVariantImage = () => {
+    // Default to the thumbnail if no other data is available
+    if (!productData || !productData.images || !productData.images.length) {
+      return item.thumbnail
+    }
+
+    // Find the color option from the variant
+    const colorOption = item.variant?.options?.find(
+      (opt) => opt.option?.title.toLowerCase() === "color"
+    )
+
+    if (colorOption) {
+      // Try to find an image that includes the color name in its URL
+      const colorImage = productData.images.find((img: any) =>
+        img.url.toLowerCase().includes(colorOption.value.toLowerCase())
+      )
+
+      return colorImage ? colorImage.url : item.thumbnail
+    }
+
+    return item.thumbnail
+  }
 
   const changeQuantity = async (quantity: number) => {
     setError(null)
@@ -58,8 +108,8 @@ const Item = ({ item, type = "full" }: ItemProps) => {
           })}
         >
           <Thumbnail
-            thumbnail={item.variant?.product?.thumbnail}
-            images={item.variant?.product?.images}
+            thumbnail={getVariantImage()}
+            images={productData?.images || []}
             size="square"
           />
         </LocalizedClientLink>
