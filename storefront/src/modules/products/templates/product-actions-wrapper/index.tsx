@@ -8,11 +8,9 @@ import ProductActions from "@modules/products/components/product-actions"
 export default async function ProductActionsWrapper({
   id,
   region,
-  colorValues,
 }: {
   id: string
   region: HttpTypes.StoreRegion
-  colorValues: string[]
 }) {
   const [product] = await getProductsById({
     ids: [id],

@@ -48,7 +48,7 @@ export default function ProductActions({
 
   const initialColor = useMemo(() => {
     const urlColor = searchParams?.get("color")
-    const colorOption = product.options?.find((opt) => opt.title === "Color")
+    const colorOption = product.options?.find((opt) => opt.title === "Color" || opt.title === "Base")
     const validColors = colorOption?.values?.map((v) => v.value) || []
 
     // Validate URL color exists in product options
@@ -94,7 +94,7 @@ export default function ProductActions({
   }
 
   useEffect(() => {
-    const colorOption = product.options?.find((opt) => opt.title === "Color")
+    const colorOption = product.options?.find((opt) => opt.title === "Color" || opt.title === "Base")
     if (colorOption?.values?.length && !options.Color) {
       setOptions((prev) => ({
         ...prev,

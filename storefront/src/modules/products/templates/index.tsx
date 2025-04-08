@@ -31,7 +31,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
   // Get color option from product
   const colorOption = product.options?.find(
-    (opt) => opt.title.toLowerCase() === "color"
+    (opt) => opt.title.toLowerCase() === "color" || opt.title.toLowerCase() === "base"
   )
   const colorValues = colorOption?.values || []
 
@@ -73,7 +73,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             <ProductActionsWrapper
               id={product.id}
               region={region}
-              colorValues={colorValues.map((v) => v.value)}
             />
           </Suspense>
         </div>
