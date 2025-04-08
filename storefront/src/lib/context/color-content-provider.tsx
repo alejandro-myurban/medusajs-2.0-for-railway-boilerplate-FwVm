@@ -1,5 +1,6 @@
 // Update ColorContextProvider.tsx
-import React, { createContext, useContext, useState, useEffect, Suspense } from "react"
+"use client"
+import React, { createContext, useContext, useState, Suspense } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 type ColorContextType = {
