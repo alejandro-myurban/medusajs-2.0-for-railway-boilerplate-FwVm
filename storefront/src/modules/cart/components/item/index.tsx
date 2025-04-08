@@ -60,6 +60,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
       return item.thumbnail
     }
 
+    console.log(item.variant?.options)
     // Find the color option from the variant
     const colorOption = item.variant?.options?.find(
       (opt) => opt.option?.title.toLowerCase() === "color"
@@ -71,6 +72,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
         img.url.toLowerCase().includes(colorOption.value.toLowerCase())
       )
 
+      console.log("colorImage", colorImage)
       return colorImage ? colorImage.url : item.thumbnail
     }
 
