@@ -52,7 +52,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
     }
 
     getProductData()
-  }, [productId])
+  }, [])
 
   const getVariantImage = () => {
     // Default to the thumbnail if no other data is available
