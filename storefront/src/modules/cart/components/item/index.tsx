@@ -55,27 +55,52 @@ const Item = ({ item, type = "full" }: ItemProps) => {
   }, [])
 
   const getVariantImage = () => {
-    // Default to the thumbnail if no other data is available
+    console.log("Ejecutando getVariantImage")
+
+    // Si no hay datos de producto o imágenes, usa el thumbnail
     if (!productData || !productData.images || !productData.images.length) {
+      console.log("Usando thumbnail por defecto:", item.thumbnail)
       return item.thumbnail
     }
 
-    console.log(item.variant?.options)
-    // Find the color option from the variant
+    // Encuentra el valor del color de las opciones de la variante
     const colorOption = item.variant?.options?.find(
-      (opt) => opt.option?.title.toLowerCase() === "color"
+      (opt) => opt.option?.title?.toLowerCase() === "color"
     )
 
-    if (colorOption) {
-      // Try to find an image that includes the color name in its URL
-      const colorImage = productData.images.find((img: any) =>
-        img.url.toLowerCase().includes(colorOption.value.toLowerCase())
-      )
+    console.log("Opción de color encontrada:", colorOption)
 
-      console.log("colorImage", colorImage)
-      return colorImage ? colorImage.url : item.thumbnail
+    const colorValue = colorOption?.value?.toLowerCase()
+
+    // Si no encuentra un color, usa el thumbnail
+    if (!colorValue) {
+      console.log(
+        "No se encontró valor de color, usando thumbnail:",
+        item.thumbnail
+      )
+      return item.thumbnail
     }
 
+    console.log("Buscando imágenes para color:", colorValue)
+
+    // Encuentra imágenes que contengan el color en su URL
+    const colorImages = productData.images.filter((img) =>
+      img.url.toLowerCase().includes(colorValue)
+    )
+
+    console.log("Imágenes encontradas para este color:", colorImages)
+
+    // Si encuentra imágenes para este color, usa la primera
+    if (colorImages.length > 0) {
+      console.log("URL de imagen seleccionada:", colorImages[0].url)
+      return colorImages[0].url // Asegúrate de devolver solo la URL
+    }
+
+    // Si no encuentra imágenes para este color, usa el thumbnail
+    console.log(
+      "Sin imágenes para este color, usando thumbnail:",
+      item.thumbnail
+    )
     return item.thumbnail
   }
 
@@ -99,6 +124,9 @@ const Item = ({ item, type = "full" }: ItemProps) => {
   const maxQtyFromInventory = 10
   const maxQuantity = item.variant?.manage_inventory ? 10 : maxQtyFromInventory
 
+  const imageUrl = getVariantImage()
+  console.log("URL final a usar en Thumbnail:", imageUrl)
+
   return (
     <Table.Row className="w-full" data-testid="product-row">
       <Table.Cell className="!pl-0 p-4 w-24">
@@ -110,7 +138,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
           })}
         >
           <Thumbnail
-            thumbnail={getVariantImage()}
+            thumbnail={imageUrl}
             images={productData?.images || []}
             size="square"
           />
