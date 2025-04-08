@@ -39,7 +39,7 @@ const Item = ({ item, type = "full" }: ItemProps) => {
         try {
           const data = await getProductsById({
             ids: productId.filter(Boolean) as string[],
-            regionId: "default-region-id",
+            regionId: "reg_01JR88JEHHXNBCD73H7SFE2ZMS",
           })
           console.log("data", data)
           setProductData(data)
