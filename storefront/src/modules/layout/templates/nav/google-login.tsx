@@ -1,44 +1,33 @@
-'use client'
-import React from 'react'
+"use client" // include with Next.js 13+
 
-interface GoogleLoginButtonProps {
-  medusa_url: string;
-  authPath: string;
-}
+import { sdk } from "@lib/config"
 
-export default function GoogleLoginButton({ medusa_url, authPath }: GoogleLoginButtonProps) {
-  const handleGoogleLogin = async () => {
-    try {
-      const res = await fetch(`${medusa_url}/${authPath}`, {
-        method: 'GET',
-        headers: {
-          ...(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_API_KEY && {
-            'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_API_KEY
-          })
-        }
-      });
+export default function Login() {
+  const loginWithGoogle = async () => {
+    const result = await sdk.auth.login("customer", "google", {})
 
-      if (!res.ok) {
-        const error = await res.json();
-        console.error("Error:", error);
-        return;
-      }
+    if (typeof result === "object" && result.location) {
+      // redirect to Google for authentication
+      window.location.href = result.location
 
-      // Si la respuesta es correcta (redirección), redirige al usuario:
-      window.location.href = res.url;
-
-    } catch (error) {
-      console.error("Error:", error);
+      return
     }
+
+    if (typeof result !== "string") {
+      // result failed, show an error
+      alert("Authentication failed")
+      return
+    }
+
+    // all subsequent requests are authenticated
+    const { customer } = await sdk.store.customer.retrieve()
+
+    console.log(customer)
   }
 
   return (
-    <button
-      className="hover:text-ui-fg-base"
-      onClick={handleGoogleLogin}
-      data-testid="nav-account-link"
-    >
-      Google Login
-    </button>
-  );
+    <div>
+      <button onClick={loginWithGoogle}>Login with Google</button>
+    </div>
+  )
 }
