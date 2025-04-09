@@ -5,6 +5,7 @@ import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
 import SideMenu from "@modules/layout/components/side-menu"
+import Link from "next/link"
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
@@ -50,13 +51,13 @@ export default async function Nav() {
               >
                 Account
               </LocalizedClientLink>
-              <LocalizedClientLink
+              <Link
                 className="hover:text-ui-fg-base"
                 href={`${medusa_url}/${authPath}`}
                 data-testid="nav-account-link"
               >
                 Google Login
-              </LocalizedClientLink>
+              </Link>
             </div>
             <Suspense
               fallback={
