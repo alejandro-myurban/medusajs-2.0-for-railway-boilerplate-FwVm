@@ -8,6 +8,8 @@ import SideMenu from "@modules/layout/components/side-menu"
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
+  const medusa_url = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || ""
+  const authPath = process.env.NEXT_PUBLIC_AUTH_PATH || ""
 
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
@@ -47,6 +49,13 @@ export default async function Nav() {
                 data-testid="nav-account-link"
               >
                 Account
+              </LocalizedClientLink>
+              <LocalizedClientLink
+                className="hover:text-ui-fg-base"
+                href={`${medusa_url}/${authPath}`}
+                data-testid="nav-account-link"
+              >
+                Google Login
               </LocalizedClientLink>
             </div>
             <Suspense
