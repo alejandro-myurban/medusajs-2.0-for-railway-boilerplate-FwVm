@@ -6,6 +6,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import CartButton from "@modules/layout/components/cart-button"
 import SideMenu from "@modules/layout/components/side-menu"
 import Link from "next/link"
+import GoogleLoginButton from "./google-login"
 
 export default async function Nav() {
   const regions = await listRegions().then((regions: StoreRegion[]) => regions)
@@ -51,13 +52,7 @@ export default async function Nav() {
               >
                 Account
               </LocalizedClientLink>
-              <Link
-                className="hover:text-ui-fg-base"
-                href={`${medusa_url}/${authPath}`}
-                data-testid="nav-account-link"
-              >
-                Google Login
-              </Link>
+              <GoogleLoginButton medusa_url={medusa_url} authPath={authPath} />
             </div>
             <Suspense
               fallback={
