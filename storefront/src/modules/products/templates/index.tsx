@@ -42,7 +42,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   // Set initial option value
   const initialValue = isValidOption
     ? selectedParam
-    : optionValues[0]?.value || ""
+    : optionValues[0]?.value || "" 
 
   console.log("ProductTemplate rendering with initialValue:", initialValue)
 
