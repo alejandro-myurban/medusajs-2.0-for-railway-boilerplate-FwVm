@@ -4,14 +4,15 @@ import {
   } from "@medusajs/framework"
   import { exportProductsWorkflow } from "@medusajs/medusa/core-flows"
   
-  export default async function handleOrderPlaced({
+  export default async function exportProductsWithEuroPrices({
     event: { data },
     container,
-  }: SubscriberArgs < { id: string } > ) {
+  }: SubscriberArgs<{ id: string }>) {
     const { result } = await exportProductsWorkflow(container)
       .run({
         input: {
-          select: ["*"],
+          select: ["*", "variants.*", "variants.prices.*"],
+          // No podemos usar context aquí
         }
       })
   
