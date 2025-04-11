@@ -28,6 +28,7 @@ export default function VinylNavDropdown({
   categories: Category[] 
 }) {
   const [activeParent, setActiveParent] = useState<string | null>(null)
+  const [activeChild, setActiveChild] = useState<string | null>(null)
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   
@@ -41,7 +42,15 @@ export default function VinylNavDropdown({
       clearTimeout(closeTimeoutRef.current)
       closeTimeoutRef.current = null
     }
+    
+    // Establecemos la categoría padre activa
     setActiveParent(id)
+    
+    // Si hay una categoría padre activa, automáticamente activamos su primera categoría hija
+    const parent = parentCategories.find(p => p.id === id)
+    if (parent?.category_children && parent.category_children.length > 0) {
+      setActiveChild(parent.category_children[0].id)
+    }
   }
   
   // Función para cerrar el menú con un retraso
@@ -49,6 +58,7 @@ export default function VinylNavDropdown({
     // Establecemos un timeout para cerrar el menú después de un retraso
     closeTimeoutRef.current = setTimeout(() => {
       setActiveParent(null)
+      setActiveChild(null)
     }, 500) // 500ms de retraso antes de cerrar
   }
   
@@ -66,6 +76,7 @@ export default function VinylNavDropdown({
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveParent(null)
+        setActiveChild(null)
       }
     }
     
@@ -122,16 +133,23 @@ export default function VinylNavDropdown({
                       className="relative"
                     >
                       <div 
-                        className="flex items-center justify-between hover:bg-ui-bg-subtle transition-colors"
+                        className={clx(
+                          "flex items-center justify-between transition-colors",
+                          activeChild === child.id ? "bg-ui-bg-subtle" : "hover:bg-ui-bg-subtle"
+                        )}
                         onMouseEnter={() => {
-                          // Mantenemos el menú principal abierto cuando se hace hover sobre un hijo
+                          // Actualizamos el hijo activo y mantenemos el padre activo
                           handleOpenMenu(parent.id)
+                          setActiveChild(child.id)
                         }}
                       >
                         <LocalizedClientLink
                           href={`/categories/${child.handle}`}
                           className="block px-6 py-3 flex-grow"
-                          onClick={() => setActiveParent(null)}
+                          onClick={() => {
+                            setActiveParent(null)
+                            setActiveChild(null)
+                          }}
                         >
                           {child.name}
                         </LocalizedClientLink>
@@ -151,13 +169,14 @@ export default function VinylNavDropdown({
                         )}
                       </div>
                       
-                      {/* Sub-dropdown para nietas (tercer nivel) */}
-                      {child.category_children && child.category_children.length > 0 && (
+                      {/* Sub-dropdown para nietas (tercer nivel) - Ahora se muestra cuando activeChild coincide */}
+                      {child.category_children && child.category_children.length > 0 && activeChild === child.id && (
                         <div 
                           className="absolute left-full top-0 bg-white shadow-lg rounded-md border border-ui-border-base min-w-56 -ml-1 z-50"
                           onMouseEnter={() => {
-                            // Mantenemos el menú principal abierto cuando se hace hover sobre un nieto
+                            // Mantenemos ambos menús abiertos
                             handleOpenMenu(parent.id)
+                            setActiveChild(child.id)
                           }}
                           onMouseLeave={handleCloseMenu}
                         >
@@ -170,7 +189,10 @@ export default function VinylNavDropdown({
                                 <LocalizedClientLink
                                   href={`/categories/${grandchild.handle}`}
                                   className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors whitespace-nowrap"
-                                  onClick={() => setActiveParent(null)}
+                                  onClick={() => {
+                                    setActiveParent(null)
+                                    setActiveChild(null)
+                                  }}
                                 >
                                   {grandchild.name}
                                 </LocalizedClientLink>
@@ -180,7 +202,10 @@ export default function VinylNavDropdown({
                               <LocalizedClientLink
                                 href={`/categories/${child.handle}`}
                                 className="block px-6 py-3 text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle transition-colors text-sm"
-                                onClick={() => setActiveParent(null)}
+                                onClick={() => {
+                                  setActiveParent(null)
+                                  setActiveChild(null)
+                                }}
                               >
                                 Ver todo en {child.name}
                               </LocalizedClientLink>
@@ -195,7 +220,10 @@ export default function VinylNavDropdown({
                     <LocalizedClientLink
                       href={`/categories/${parent.handle}`}
                       className="block px-6 py-3 text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle transition-colors text-sm"
-                      onClick={() => setActiveParent(null)}
+                      onClick={() => {
+                        setActiveParent(null)
+                        setActiveChild(null)
+                      }}
                     >
                       Ver todo en {parent.name}
                     </LocalizedClientLink>
