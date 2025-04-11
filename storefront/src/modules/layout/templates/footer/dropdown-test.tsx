@@ -10,6 +10,7 @@ type CategoryChild = {
   id: string
   name: string
   handle: string
+  category_children?: CategoryChild[]
 }
 
 type Category = {
@@ -26,99 +27,117 @@ export default function VinylNavDropdown({
 }: { 
   categories: Category[] 
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const [activeParent, setActiveParent] = useState<string | null>(null)
 
   // Filtramos solo las categorías padres (sin parent_category)
   const parentCategories = categories.filter(cat => !cat.parent_category)
   
-  // Cuando el dropdown se abre por primera vez, activamos la primera categoría padre
-  const handleOpenDropdown = () => {
-    setIsOpen(true)
-    if (!activeParent && parentCategories.length > 0) {
-      setActiveParent(parentCategories[0].id)
-    }
-  }
-
   return (
-    <div 
-      className="relative"
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      <button 
-        className={clx(
-          "flex items-center gap-1 px-4 py-2 text-ui-fg-base hover:text-ui-fg-subtle transition-colors",
-          isOpen && "font-medium"
-        )}
-        onMouseEnter={handleOpenDropdown}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-      >
-        Vinilos
-        <svg 
-          className={clx("w-4 h-4 transition-transform", isOpen && "rotate-180")}
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 mt-1 bg-white shadow-lg rounded-md border border-ui-border-base w-64 z-50">
-          <div className="flex">
-            {/* Panel izquierdo - Categorías padre */}
-            <div className="w-1/2 border-r border-ui-border-base">
-              <ul className="py-2">
-                {parentCategories.map((parent) => (
-                  <li key={parent.id}>
-                    <button
-                      className={clx(
-                        "px-4 py-2 w-full text-left hover:bg-ui-bg-subtle transition-colors",
-                        activeParent === parent.id && "bg-ui-bg-subtle font-medium"
-                      )}
-                      onMouseEnter={() => setActiveParent(parent.id)}
-                    >
-                      {parent.name}
-                    </button>
-                  </li>
-                ))}
-                <li>
-                  <LocalizedClientLink
-                    href="/categories/vinilos"
-                    className="block px-4 py-2 text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle transition-colors text-sm"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Ver todos los vinilos
-                  </LocalizedClientLink>
-                </li>
-              </ul>
-            </div>
-
-            {/* Panel derecho - Categorías hijo */}
-            <div className="w-1/2">
-              {activeParent && (
-                <ul className="py-2">
-                  {parentCategories
-                    .find(p => p.id === activeParent)?.category_children
-                    ?.map((child) => (
-                      <li key={child.id}>
+    <nav className="relative">
+      <ul className="flex items-center gap-8">
+        {parentCategories.map((parent) => (
+          <li 
+            key={parent.id}
+            className="relative"
+            onMouseLeave={() => setActiveParent(null)}
+          >
+            <LocalizedClientLink
+              href={`/categories/${parent.handle}`}
+              className={clx(
+                "block py-4 px-2 text-ui-fg-base hover:text-ui-fg-subtle transition-colors",
+                activeParent === parent.id && "font-medium"
+              )}
+              onMouseEnter={() => setActiveParent(parent.id)}
+            >
+              {parent.name}
+              {parent.category_children && parent.category_children.length > 0 && (
+                <svg 
+                  className="w-3 h-3 ml-1 inline-block"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              )}
+            </LocalizedClientLink>
+            
+            {/* Dropdown para categorías hijas */}
+            {activeParent === parent.id && parent.category_children && parent.category_children.length > 0 && (
+              <div className="absolute left-0 mt-2 bg-white shadow-lg rounded-md border border-ui-border-base min-w-64 z-50">
+                <ul className="py-3">
+                  {parent.category_children.map((child) => (
+                    <li key={child.id} className="relative group">
+                      <div className="flex items-center justify-between">
                         <LocalizedClientLink
                           href={`/categories/${child.handle}`}
-                          className="block px-4 py-2 hover:bg-ui-bg-subtle transition-colors"
-                          onClick={() => setIsOpen(false)}
+                          className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors w-full"
+                          onClick={() => setActiveParent(null)}
                         >
                           {child.name}
                         </LocalizedClientLink>
-                      </li>
-                    ))}
+                        
+                        {/* Flecha para categorías nietas si existen */}
+                        {child.category_children && child.category_children.length > 0 && (
+                          <span className="mr-4 text-ui-fg-subtle">
+                            <svg 
+                              className="w-3 h-3"
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Sub-dropdown para nietas (si existen) */}
+                      {child.category_children && child.category_children.length > 0 && (
+                        <div className="absolute left-full top-0 hidden group-hover:block bg-white shadow-lg rounded-md border border-ui-border-base min-w-56 z-50">
+                          <ul className="py-3">
+                            {child.category_children.map((grandchild) => (
+                              <li key={grandchild.id}>
+                                <LocalizedClientLink
+                                  href={`/categories/${grandchild.handle}`}
+                                  className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors"
+                                  onClick={() => setActiveParent(null)}
+                                >
+                                  {grandchild.name}
+                                </LocalizedClientLink>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                  
+                  <li className="border-t border-ui-border-base mt-2 pt-2">
+                    <LocalizedClientLink
+                      href={`/categories/${parent.handle}`}
+                      className="block px-6 py-3 text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle transition-colors text-sm"
+                      onClick={() => setActiveParent(null)}
+                    >
+                      Ver todo en {parent.name}
+                    </LocalizedClientLink>
+                  </li>
                 </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+              </div>
+            )}
+          </li>
+        ))}
+        
+        {/* Opción "Ver todos" */}
+        <li>
+          <LocalizedClientLink
+            href="/categories/vinilos"
+            className="block py-4 px-2 text-ui-fg-base hover:text-ui-fg-subtle transition-colors"
+          >
+            Ver todos
+          </LocalizedClientLink>
+        </li>
+      </ul>
+    </nav>
   )
 }
