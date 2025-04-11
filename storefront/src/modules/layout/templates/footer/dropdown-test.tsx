@@ -1,7 +1,7 @@
 // src/components/layout/navbar/vinyl-nav-dropdown.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { clx } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
@@ -10,7 +10,7 @@ type CategoryChild = {
   id: string
   name: string
   handle: string
-  category_children?: CategoryChild[]
+  category_children?: CategoryChild[] // Permite nietos recursivamente
 }
 
 type Category = {
@@ -28,18 +28,62 @@ export default function VinylNavDropdown({
   categories: Category[] 
 }) {
   const [activeParent, setActiveParent] = useState<string | null>(null)
-
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  
   // Filtramos solo las categorías padres (sin parent_category)
   const parentCategories = categories.filter(cat => !cat.parent_category)
   
+  // Función para abrir el menú con un id específico
+  const handleOpenMenu = (id: string) => {
+    // Si hay un timeout pendiente para cerrar, lo cancelamos
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    setActiveParent(id)
+  }
+  
+  // Función para cerrar el menú con un retraso
+  const handleCloseMenu = () => {
+    // Establecemos un timeout para cerrar el menú después de un retraso
+    closeTimeoutRef.current = setTimeout(() => {
+      setActiveParent(null)
+    }, 500) // 500ms de retraso antes de cerrar
+  }
+  
+  // Cancelar cualquier timeout pendiente al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+      }
+    }
+  }, [])
+  
+  // Detectar clicks fuera del menú para cerrarlo
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveParent(null)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+  
   return (
-    <nav className="relative">
+    <nav className="relative" ref={menuRef}>
       <ul className="flex items-center gap-8">
         {parentCategories.map((parent) => (
           <li 
             key={parent.id}
-            className="relative"
-            onMouseLeave={() => setActiveParent(null)}
+            className="relative group"
+            onMouseEnter={() => handleOpenMenu(parent.id)}
+            onMouseLeave={handleCloseMenu}
           >
             <LocalizedClientLink
               href={`/categories/${parent.handle}`}
@@ -47,7 +91,6 @@ export default function VinylNavDropdown({
                 "block py-4 px-2 text-ui-fg-base hover:text-ui-fg-subtle transition-colors",
                 activeParent === parent.id && "font-medium"
               )}
-              onMouseEnter={() => setActiveParent(parent.id)}
             >
               {parent.name}
               {parent.category_children && parent.category_children.length > 0 && (
@@ -64,14 +107,30 @@ export default function VinylNavDropdown({
             
             {/* Dropdown para categorías hijas */}
             {activeParent === parent.id && parent.category_children && parent.category_children.length > 0 && (
-              <div className="absolute left-0 mt-2 bg-white shadow-lg rounded-md border border-ui-border-base min-w-64 z-50">
+              <div 
+                className="absolute left-0 mt-1 bg-white shadow-lg rounded-md border border-ui-border-base min-w-64 z-50"
+                onMouseEnter={() => handleOpenMenu(parent.id)}
+                onMouseLeave={handleCloseMenu}
+              >
+                {/* Área de "amortiguación" superior para mejorar la experiencia de hover */}
+                <div className="h-2 absolute -top-2 left-0 right-0"></div>
+                
                 <ul className="py-3">
                   {parent.category_children.map((child) => (
-                    <li key={child.id} className="relative group">
-                      <div className="flex items-center justify-between">
+                    <li 
+                      key={child.id} 
+                      className="relative"
+                    >
+                      <div 
+                        className="flex items-center justify-between hover:bg-ui-bg-subtle transition-colors"
+                        onMouseEnter={() => {
+                          // Mantenemos el menú principal abierto cuando se hace hover sobre un hijo
+                          handleOpenMenu(parent.id)
+                        }}
+                      >
                         <LocalizedClientLink
                           href={`/categories/${child.handle}`}
-                          className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors w-full"
+                          className="block px-6 py-3 flex-grow"
                           onClick={() => setActiveParent(null)}
                         >
                           {child.name}
@@ -92,21 +151,40 @@ export default function VinylNavDropdown({
                         )}
                       </div>
                       
-                      {/* Sub-dropdown para nietas (si existen) */}
+                      {/* Sub-dropdown para nietas (tercer nivel) */}
                       {child.category_children && child.category_children.length > 0 && (
-                        <div className="absolute left-full top-0 hidden group-hover:block bg-white shadow-lg rounded-md border border-ui-border-base min-w-56 z-50">
+                        <div 
+                          className="absolute left-full top-0 bg-white shadow-lg rounded-md border border-ui-border-base min-w-56 -ml-1 z-50"
+                          onMouseEnter={() => {
+                            // Mantenemos el menú principal abierto cuando se hace hover sobre un nieto
+                            handleOpenMenu(parent.id)
+                          }}
+                          onMouseLeave={handleCloseMenu}
+                        >
+                          {/* Área de "conexión" para facilitar el movimiento del ratón hacia los nietos */}
+                          <div className="absolute -left-4 top-0 bottom-0 w-4"></div>
+                          
                           <ul className="py-3">
                             {child.category_children.map((grandchild) => (
                               <li key={grandchild.id}>
                                 <LocalizedClientLink
                                   href={`/categories/${grandchild.handle}`}
-                                  className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors"
+                                  className="block px-6 py-3 hover:bg-ui-bg-subtle transition-colors whitespace-nowrap"
                                   onClick={() => setActiveParent(null)}
                                 >
                                   {grandchild.name}
                                 </LocalizedClientLink>
                               </li>
                             ))}
+                            <li className="border-t border-ui-border-base mt-2 pt-2">
+                              <LocalizedClientLink
+                                href={`/categories/${child.handle}`}
+                                className="block px-6 py-3 text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle transition-colors text-sm"
+                                onClick={() => setActiveParent(null)}
+                              >
+                                Ver todo en {child.name}
+                              </LocalizedClientLink>
+                            </li>
                           </ul>
                         </div>
                       )}
