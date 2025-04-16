@@ -9,11 +9,10 @@ import {
   StatusBadge,
 } from "@medusajs/ui";
 import { toast } from "@medusajs/ui";
-import { sdk } from "../../../lib/sdk";
+import { sdk } from "../../lib/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { defineRouteConfig } from "@medusajs/admin-sdk";
 import { ShoppingCart } from "@medusajs/icons";
-import { useNavigate } from "react-router-dom";
 
 export const config = defineRouteConfig({
   label: "Orders",
@@ -24,8 +23,6 @@ const OrdersPage = () => {
   const [rowSelection, setRowSelection] = useState<DataTableRowSelectionState>(
     {}
   );
-
-  const navigate = useNavigate();
 
   // Modificar la consulta para incluir el cliente y otros datos relevantes
   const { data, isLoading, refetch } = useQuery({
@@ -200,9 +197,7 @@ const OrdersPage = () => {
     columns,
     data: orders || [],
     commands,
-    onRowClick(event, row) {
-      navigate(`/orders/${row.id}`);
-    },
+    onRowClick(event, row) {},
 
     rowSelection: {
       state: rowSelection,
