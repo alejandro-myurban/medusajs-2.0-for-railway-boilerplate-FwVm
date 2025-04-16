@@ -234,7 +234,7 @@ export default function VinylNavDropdown({
           </li>
         ))}
         
-        {/* Opción "Ver todos" */}
+        {/* Opción "Ver todos" */}  
         <li>
           <LocalizedClientLink
             href="/categories/vinilos"

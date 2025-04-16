@@ -25,6 +25,7 @@
     "@medusajs/cli": "latest",
     "@medusajs/core-flows": "latest",
     "@medusajs/framework": "latest",
+    "@medusajs/icons": "^2.7.0",
     "@medusajs/medusa": "latest",
     "@medusajs/notification-sendgrid": "latest",
     "@medusajs/payment-stripe": "latest",
