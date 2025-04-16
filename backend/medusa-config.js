@@ -44,8 +44,6 @@ const medusaConfig = {
     },
   },
   admin: {
-    backendUrl: BACKEND_URL,
-    disable: SHOULD_DISABLE_ADMIN,
     vite: () => {
       return {
         optimizeDeps: {
@@ -53,6 +51,8 @@ const medusaConfig = {
         },
       };
     },
+    backendUrl: BACKEND_URL,
+    disable: SHOULD_DISABLE_ADMIN,
   },
   modules: [
     {
