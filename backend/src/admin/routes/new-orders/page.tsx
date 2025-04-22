@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DataTable,
   useDataTable,
@@ -7,6 +7,8 @@ import {
   DataTableRowSelectionState,
   Heading,
   StatusBadge,
+  DataTablePaginationState,
+  Skeleton,
 } from "@medusajs/ui";
 import { toast } from "@medusajs/ui";
 import { sdk } from "../../lib/sdk";
@@ -16,7 +18,7 @@ import { ShoppingCart } from "@medusajs/icons";
 import { useNavigate } from "react-router-dom";
 
 export const config = defineRouteConfig({
-  label: "Orders",
+  label: "Pedidos",
   icon: ShoppingCart,
 });
 
@@ -24,17 +26,27 @@ const OrdersPage = () => {
   const [rowSelection, setRowSelection] = useState<DataTableRowSelectionState>(
     {}
   );
+
+  const [pagination, setPagination] = useState<DataTablePaginationState>({
+    pageSize: 50, // Aumentar el tamaño de página
+    pageIndex: 0,
+  });
+
+  const offset = useMemo(() => {
+    return pagination.pageIndex * pagination.pageSize;
+  }, [pagination]);
+
   const navigate = useNavigate();
   // Modificar la consulta para incluir el cliente y otros datos relevantes
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch, isFetching } = useQuery({
     queryFn: () =>
       sdk.admin.order.list({
         fields: "customer.*,shipping_address,items,metadata,created_at,total",
         // También puedes incluir otros parámetros como:
-        // limit: 50,
-        // offset: 0,
+        limit: pagination.pageSize,
+        offset: offset,
       }),
-    queryKey: [["orders"]],
+    queryKey: [["orders", pagination.pageIndex, pagination.pageSize]],
   });
 
   const orders = data?.orders || [];
@@ -148,19 +160,21 @@ const OrdersPage = () => {
     // Si necesitas depurar datos
     columnHelper.accessor(
       (row) => {
-        return row.metadata && row.metadata.workshop_status_display
-          ? row.metadata.workshop_status_display
+        console.log("Estado de producción:", row);
+        return row.metadata && row.metadata.production_status_display
+          ? row.metadata.production_status_display
           : null;
       },
       {
-        header: "Estado taller",
-        id: "workshop_status",
+        header: "Producción",
+        id: "production_status",
         cell: (info) => {
           const status = info.getValue();
+          
           if (status) {
             return <StatusBadge color="red">{status}</StatusBadge>;
           } else {
-            return <StatusBadge color="green">Preparado</StatusBadge>;
+            return <StatusBadge color="orange">En Espera</StatusBadge>;
           }
         },
       }
@@ -205,22 +219,70 @@ const OrdersPage = () => {
       state: rowSelection,
       onRowSelectionChange: setRowSelection,
     },
+    rowCount: data?.count || 0,
+    pagination: {
+      state: pagination,
+      onPaginationChange: setPagination,
+    },
     getRowId: (row) => row.id,
     // Usa el id de la orden
   });
 
   return (
     <div className="p-8 max-w-[1280px] mx-auto">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Órdenes</h1>
-      </div>
       <DataTable instance={table}>
-        <DataTable.Toolbar>
-          <Heading>
-            Selecciona las ordenes y pulsa "P" para procesarlas.
-          </Heading>
-        </DataTable.Toolbar>
-        <DataTable.Table />
+        {isLoading ? (
+          <div className="w-full">
+            <div className="mb-4">
+              <Skeleton className="h-10 w-[1200px]" /> {/* Título "Órdenes" */}
+            </div>
+
+            {/* Skeleton para la barra de herramientas */}
+            <Skeleton className="w-full h-12 mb-4" />
+
+            {/* Skeleton para el encabezado de la tabla */}
+            <div className="w-full flex mb-2">
+              <Skeleton className="w-10 h-10 mr-2" />{" "}
+              {/* Checkbox de selección */}
+              <Skeleton className="flex-1 h-10 mr-2" /> {/* Thumbnail */}
+              <Skeleton className="flex-1 h-10 mr-2" /> {/* Cliente */}
+              <Skeleton className="flex-1 h-10 mr-2" /> {/* Artículos */}
+              <Skeleton className="flex-1 h-10 mr-2" /> {/* Pago */}
+              <Skeleton className="flex-1 h-10 mr-2" /> {/* Envío */}
+              <Skeleton className="flex-1 h-10" /> {/* Estado taller */}
+            </div>
+
+            {/* Skeletons para las filas de datos */}
+            {Array.from({ length: pagination.pageSize }).map((_, i) => (
+              <div key={i} className="w-full flex mb-2">
+                <Skeleton className="w-10 h-16 mr-2" />{" "}
+                {/* Checkbox de selección */}
+                <Skeleton className="flex-1 h-16 mr-2" /> {/* Thumbnail */}
+                <Skeleton className="flex-1 h-16 mr-2" /> {/* Cliente */}
+                <Skeleton className="flex-1 h-16 mr-2" /> {/* Artículos */}
+                <Skeleton className="flex-1 h-16 mr-2" /> {/* Pago */}
+                <Skeleton className="flex-1 h-16 mr-2" /> {/* Envío */}
+                <Skeleton className="flex-1 h-16" /> {/* Estado taller */}
+              </div>
+            ))}
+
+            {/* Skeleton para la paginación */}
+            <Skeleton className="w-full h-10 mt-4" />
+          </div>
+        ) : (
+          <>
+            <div className="mb-4">
+              <h1 className="text-2xl font-bold">Órdenes</h1>
+            </div>
+            <DataTable.Toolbar>
+              <Heading>
+                Selecciona las ordenes y pulsa "P" para procesarlas.
+              </Heading>
+            </DataTable.Toolbar>
+            <DataTable.Table />
+            <DataTable.Pagination />
+          </>
+        )}
         <DataTable.CommandBar
           selectedLabel={(count) => `${count} seleccionadas`}
         />

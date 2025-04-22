@@ -1,3 +1,4 @@
+import { container } from "@medusajs/framework";
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { Modules } from "@medusajs/framework/utils";
 import jwt from "jsonwebtoken";
@@ -13,10 +14,16 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   try {
     // Verificar el token JWT
     const configModule = req.scope.resolve("configModule");
+
     const jwtSecret = configModule.projectConfig.http.jwtSecret;
+
     const decoded = jwt.verify(token, jwtSecret) as { order_id: string };
+
     console.log("Decoded JWT:", decoded);
+
     const orderId = decoded.order_id;
+
+    const eventModuleService = container.resolve(Modules.EVENT_BUS);
 
     // Obtener el payment_collection asociado con la orden
     const query = req.scope.resolve("query");
@@ -66,11 +73,24 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       });
     }
 
-    // Capturar el pago
-    await paymentModuleService.capturePayment({
-      payment_id: paymentCollectionDetails[0].payments[0].id,
-    });
     // Responder con éxito
+    const payment = paymentCollectionDetails[0].payments[0];
+    if (!payment.captured_at) {
+      await paymentModuleService.capturePayment({ payment_id: payment.id });
+      await eventModuleService.emit({
+        name: "order.cod_order_placed",
+        data: { id: orderId },
+      });
+      await eventModuleService.emit({
+        name: "order.status_stock_await",
+        data: {
+          id: orderId,
+          status: "espera_stock",
+          type: "stock_await",
+        },
+      });
+    }
+
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Error al confirmar el pago:", error);

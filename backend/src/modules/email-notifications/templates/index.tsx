@@ -11,11 +11,16 @@ import {
   WORKSHOP_STATUS,
   WorkshopStatus,
 } from "./workshop-state";
+import ProductStatus, {
+  isProductStatusData,
+  PRODUCT_STATUS,
+} from "./product-status-change";
 
 export const EmailTemplates = {
   INVITE_USER,
   ORDER_PLACED,
   WORKSHOP_STATUS,
+  PRODUCT_STATUS,
 } as const;
 
 export type EmailTemplateType = keyof typeof EmailTemplates;
@@ -51,6 +56,15 @@ export function generateEmailTemplate(
         );
       }
       return <WorkshopStatus {...data} />;
+
+    case EmailTemplates.PRODUCT_STATUS:
+      if (!isProductStatusData(data)) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          `Invalid data for template "${EmailTemplates.PRODUCT_STATUS}"`
+        );
+      }
+      return <ProductStatus {...data} />;
 
     default:
       throw new MedusaError(
