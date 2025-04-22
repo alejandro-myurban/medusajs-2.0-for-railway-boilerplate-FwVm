@@ -38,6 +38,7 @@ export default async function handleOrderNextSteps({
       filters: [{ field: "id", operator: "=", value: item.variant_id }],
       fields: ["allow_backorder", "inventory_items"],
     });
+
     const v = variants[0];
     if (v?.allow_backorder && v.inventory_items.length === 0) {
       needsStock = true;
