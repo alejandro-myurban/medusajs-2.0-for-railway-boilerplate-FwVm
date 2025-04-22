@@ -65,14 +65,14 @@ export default async function orderPlacedHandler({
         },
       });
 
-      for (const [productType, eventName] of Object.entries(productEventMap)) {
-        if (order.items.some((item) => item.product_type === productType)) {
-          await eventModuleService.emit({
-            name: eventName,
-            data: { order_id: order.id },
-          });
-        }
-      }
+      // for (const [productType, eventName] of Object.entries(productEventMap)) {
+      //   if (order.items.some((item) => item.product_type === productType)) {
+      //     await eventModuleService.emit({
+      //       name: eventName,
+      //       data: { order_id: order.id },
+      //     });
+      //   }
+      // }
     }
   } catch (error) {
     console.error("Error sending order confirmation notification:", error);
