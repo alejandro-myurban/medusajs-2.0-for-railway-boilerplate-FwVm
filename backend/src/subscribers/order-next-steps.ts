@@ -31,64 +31,77 @@ export default async function handleOrderNextSteps({
   console.log(`Order ${data.id} next stepsSDASDASDDSSDASD`);
 
   // 2) Check backorder + sin stock
-  let needsStock = false;
-  for (const item of order.items) {
-    const { data: variants } = await query.graph({
-      entity: "product_variant",
-      filters: [{ field: "id", operator: "=", value: item.variant_id }],
-      fields: ["allow_backorder", "inventory_items"],
-    });
 
-    const v = variants[0];
-    if (v?.allow_backorder && v.inventory_items.length === 0) {
-      needsStock = true;
-      break;
-    }
-  }
+  try {
+    let needsStock = false;
+    for (const item of order.items) {
+      const { data: variants } = await query.graph({
+        entity: "variant",
+        fields: [
+          "allow_backorder",
+          "inventory_items.*",
+          "manage_inventory",
+          "inventory_quantity",
+        ],
+        filters: {
+          id: item.variant_id,
+        },
+      });
 
-  if (needsStock) {
-    // dispara el flujo de espera de stock
-    await eventBus.emit({
-      name: "order.status_stock_await",
-      data: {
-        id: order.id,
-        status: "espera_stock",
-      },
-    });
-  } else {
-    // sin backorder, dispara producción según tipos en la orden
-    const mapEvt: Record<
-      string,
-      { name: string; status: string; type: string }
-    > = {
-      Vinilos: {
-        name: "order.vinyl_production_requested",
-        status: "produccion_vinilos",
-        type: "vinyl",
-      },
-      Baterias: {
-        name: "order.battery_production_requested",
-        status: "produccion_baterias",
-        type: "battery",
-      },
-    };
-
-    // para cada tipo único presente:
-    for (const productType of Array.from(
-      new Set(order.items.map((i) => i.product_type))
-    )) {
-      const cfg = mapEvt[productType];
-      if (cfg) {
-        await eventBus.emit({
-          name: cfg.name,
-          data: {
-            id: order.id,
-            status: cfg.status,
-            type: cfg.type,
-          },
-        });
+      console.log("variants", variants);
+      const v = variants[0];
+      if (v?.allow_backorder && v.inventory_items.length === 0) {
+        needsStock = true;
+        break;
       }
     }
+
+    if (needsStock) {
+      // dispara el flujo de espera de stock
+      await eventBus.emit({
+        name: "order.status_stock_await",
+        data: {
+          id: order.id,
+          status: "espera_stock",
+        },
+      });
+    } else {
+      // sin backorder, dispara producción según tipos en la orden
+      const mapEvt: Record<
+        string,
+        { name: string; status: string; type: string }
+      > = {
+        Vinilos: {
+          name: "order.vinyl_production_requested",
+          status: "produccion_vinilos",
+          type: "vinyl",
+        },
+        Baterias: {
+          name: "order.battery_production_requested",
+          status: "produccion_baterias",
+          type: "battery",
+        },
+      };
+
+      // para cada tipo único presente:
+      for (const productType of Array.from(
+        new Set(order.items.map((i) => i.product_type))
+      )) {
+        const cfg = mapEvt[productType];
+        if (cfg) {
+          await eventBus.emit({
+            name: cfg.name,
+            data: {
+              id: order.id,
+              status: cfg.status,
+              type: cfg.type,
+            },
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching variants:", error);
   }
 }
 
