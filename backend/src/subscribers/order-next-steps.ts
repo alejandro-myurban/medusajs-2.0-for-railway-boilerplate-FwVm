@@ -28,6 +28,8 @@ export default async function handleOrderNextSteps({
     return;
   }
 
+  console.log(`Order ${data.id} next stepsSDASDASDDSSDASD`);
+
   // 2) Check backorder + sin stock
   let needsStock = false;
   for (const item of order.items) {

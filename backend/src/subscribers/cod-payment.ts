@@ -1,4 +1,8 @@
-import { generateJwtToken, Modules } from "@medusajs/framework/utils";
+import {
+  ContainerRegistrationKeys,
+  generateJwtToken,
+  Modules,
+} from "@medusajs/framework/utils";
 import {
   INotificationModuleService,
   IOrderModuleService,
@@ -12,6 +16,24 @@ export default async function confirmCodPaymentHandler({
   container,
 }: SubscriberArgs<any>) {
   console.log("HOLA MUNDO COD", data.id);
+  const query = container.resolve(ContainerRegistrationKeys.QUERY);
+
+  const { data: orders } = await query.graph({
+    entity: "order",
+    fields: ["id", "payment_collections.*", "payment_collections.payments.*"],
+    filters: {
+      id: data.id,
+    },
+  });
+
+  const payment = orders[0];
+  const isCashOnDelivery = payment.payment_collections.some((collection) =>
+    collection.payments?.some(
+      (payment) => payment.provider_id === "pp_system_default"
+    )
+  );
+
+  if (!isCashOnDelivery) return;
 
   const notificationModuleService: INotificationModuleService =
     container.resolve(Modules.NOTIFICATION);
