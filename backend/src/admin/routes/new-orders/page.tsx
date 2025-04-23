@@ -216,28 +216,6 @@ const OrdersPage = () => {
   const commandHelper = createDataTableCommandHelper();
   const commands = [
     commandHelper.command({
-      label: "Procesar órdenes",
-      shortcut: "P",
-      action: async (selection) => {
-        const orderIds = Object.keys(selection);
-        console.log("IDs seleccionados convertidos:", orderIds);
-        sdk.client
-          .fetch("/admin/orders/process-batch", {
-            method: "POST",
-            body: {
-              ids: orderIds,
-            },
-          })
-          .then(() => {
-            toast.success("Órdenes procesadas correctamente");
-            refetch();
-          })
-          .catch(() => {
-            toast.error("Error al procesar las órdenes");
-          });
-      },
-    }),
-    commandHelper.command({
       label: "Pasar a espera de stock",
       shortcut: "S",
       action: async (selection) => {
@@ -264,9 +242,31 @@ const OrdersPage = () => {
             body: { ids },
           });
           toast.success("Órdenes lanzadas a producción de vinilos");
-          refetch(); // refresca la tabla
+          refetch();
         } catch (err) {
           toast.error("Error al iniciar producción de vinilos");
+        }
+      },
+    }),
+    commandHelper.command({
+      label: "Marcar como enviado",
+      shortcut: "E",
+      action: async (selection) => {
+        const ids = Object.keys(selection);
+        if (ids.length === 0) {
+          toast.info("Selecciona al menos una orden");
+          return;
+        }
+
+        try {
+          await sdk.client.fetch("/admin/orders/switch-to-delivered", {
+            method: "POST",
+            body: { ids },
+          });
+          toast.success("Órdenes marcadas como enviadas");
+          refetch();
+        } catch (err) {
+          toast.error("Las órdenes ya están enviadas o no existen");
         }
       },
     }),
@@ -361,24 +361,22 @@ const OrdersPage = () => {
                 Cancelar
               </Button>
               <Button
-                onClick={() => {
-                  sdk.client
-                    .fetch("/admin/orders/switch-to-stock", {
+                onClick={async () => {
+                  try {
+                    await sdk.client.fetch("/admin/orders/switch-to-stock", {
                       method: "POST",
                       body: {
                         ids: selectedOrderIds,
                         day,
                         month,
                       },
-                    })
-                    .then(() => {
-                      toast.success("Órdenes pasadas a stock correctamente");
-                      refetch();
-                      setIsModalOpen(false);
-                    })
-                    .catch(() => {
-                      toast.error("Error al pasar a stock las órdenes");
                     });
+                    toast.success("Órdenes pasadas a stock correctamente");
+                    await refetch();
+                    setIsModalOpen(false);
+                  } catch (error) {
+                    toast.error("Error al pasar a stock las órdenes");
+                  }
                 }}
               >
                 Confirmar
@@ -438,9 +436,9 @@ const OrdersPage = () => {
                   Selecciona las ordenes y pulsa:
                   <p className="flex gap-2 text-ui-fg-subtle">
                     <span className=" font-bold text-black dark:text-white">
-                      P:
+                      E:
                     </span>
-                    Procesar
+                    Marcar como enviado
                   </p>
                   <p className="flex gap-2 text-ui-fg-subtle">
                     <span className=" font-bold text-black dark:text-white">
