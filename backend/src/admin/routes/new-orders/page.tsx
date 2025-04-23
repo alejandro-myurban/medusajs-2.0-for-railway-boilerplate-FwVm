@@ -151,9 +151,13 @@ const OrdersPage = () => {
       cell: (info) => {
         const payment = info.getValue();
         if (payment === "captured") {
-          return <StatusBadge color="green">Pago Capturado</StatusBadge>;
+          return <StatusBadge color="green">Pago OK</StatusBadge>;
         } else if (payment === "authorized") {
           return <StatusBadge color="orange">Pago Autorizado</StatusBadge>;
+        } else if (payment === "canceled") {
+          return <StatusBadge color="red">Pago Cancelado</StatusBadge>;
+        } else {
+          return <StatusBadge color="red">Error</StatusBadge>;
         }
       },
     }),
@@ -165,23 +169,12 @@ const OrdersPage = () => {
           return <StatusBadge color="green">Entregado</StatusBadge>;
         } else if (fulfillment === "not_fulfilled") {
           return <StatusBadge color="orange">Pendiente</StatusBadge>;
+        } else if (fulfillment === "fulfilled") {
+          return <StatusBadge color="blue">Enviado</StatusBadge>;
         }
       },
     }),
-    columnHelper.accessor("total", {
-      header: "Total",
-      cell: (info) => {
-        const total = info.getValue();
-        return total ? `${total} €` : "N/A";
-      },
-    }),
-    columnHelper.accessor("created_at", {
-      header: "Fecha",
-      cell: (info) => {
-        const date = info.getValue();
-        return date ? new Date(date).toLocaleString("es-ES") : "N/A";
-      },
-    }),
+
     // Si necesitas depurar datos
     columnHelper.accessor(
       (row) => {
@@ -204,6 +197,20 @@ const OrdersPage = () => {
         },
       }
     ),
+    columnHelper.accessor("total", {
+      header: "Total",
+      cell: (info) => {
+        const total = info.getValue();
+        return total ? `${total} €` : "N/A";
+      },
+    }),
+    columnHelper.accessor("created_at", {
+      header: "Fecha",
+      cell: (info) => {
+        const date = info.getValue();
+        return date ? new Date(date).toLocaleString("es-ES") : "N/A";
+      },
+    }),
   ];
 
   const commandHelper = createDataTableCommandHelper();
@@ -239,6 +246,28 @@ const OrdersPage = () => {
         // Solo guardamos los IDs y abrimos el modal
         setSelectedOrderIds(orderIds);
         setIsModalOpen(true);
+      },
+    }),
+    commandHelper.command({
+      label: "Pasar a producción de vinilos",
+      shortcut: "V",
+      action: async (selection) => {
+        const ids = Object.keys(selection);
+        if (ids.length === 0) {
+          toast.info("Selecciona al menos una orden");
+          return;
+        }
+
+        try {
+          await sdk.client.fetch("/admin/orders/production/vinyl", {
+            method: "POST",
+            body: { ids },
+          });
+          toast.success("Órdenes lanzadas a producción de vinilos");
+          refetch(); // refresca la tabla
+        } catch (err) {
+          toast.error("Error al iniciar producción de vinilos");
+        }
       },
     }),
 
@@ -418,6 +447,12 @@ const OrdersPage = () => {
                       S:
                     </span>
                     Pasar a espera de stock
+                  </p>
+                  <p className="flex gap-2 text-ui-fg-subtle">
+                    <span className=" font-bold text-black dark:text-white">
+                      V:
+                    </span>
+                    Pasar a producción de vinilos
                   </p>
                 </Heading>
               </DataTable.Toolbar>

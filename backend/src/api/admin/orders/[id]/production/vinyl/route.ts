@@ -23,4 +23,4 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   res.status(200).json({ success: true });
 };
 
-export const AUTHENTICATE = false;
+
