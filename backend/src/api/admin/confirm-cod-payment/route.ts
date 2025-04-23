@@ -81,14 +81,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
         name: "order.cod_order_placed",
         data: { id: orderId },
       });
-      await eventModuleService.emit({
-        name: "order.status_stock_await",
-        data: {
-          id: orderId,
-          status: "espera_stock",
-          type: "stock_await",
-        },
-      });
     }
 
     return res.status(200).json({ success: true });

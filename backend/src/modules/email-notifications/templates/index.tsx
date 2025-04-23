@@ -15,12 +15,17 @@ import ProductStatus, {
   isProductStatusData,
   PRODUCT_STATUS,
 } from "./product-status-change";
+import OrderPlacedAdminTemplate, {
+  isOrderPlacedAdminTemplateData,
+  ORDER_PLACED_ADMIN,
+} from "./order-placed-admin";
 
 export const EmailTemplates = {
   INVITE_USER,
   ORDER_PLACED,
   WORKSHOP_STATUS,
   PRODUCT_STATUS,
+  ORDER_PLACED_ADMIN,
 } as const;
 
 export type EmailTemplateType = keyof typeof EmailTemplates;
@@ -47,6 +52,15 @@ export function generateEmailTemplate(
         );
       }
       return <OrderPlacedTemplate {...data} />;
+
+    case EmailTemplates.ORDER_PLACED_ADMIN:
+      if (!isOrderPlacedAdminTemplateData(data)) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          `Invalid data for template "${EmailTemplates.ORDER_PLACED_ADMIN}"`
+        );
+      }
+      return <OrderPlacedAdminTemplate {...data} />;
 
     case EmailTemplates.WORKSHOP_STATUS:
       if (!isNewTemplateData(data)) {

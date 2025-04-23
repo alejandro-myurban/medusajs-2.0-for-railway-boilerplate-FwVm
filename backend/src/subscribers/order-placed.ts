@@ -16,7 +16,6 @@ export default async function orderPlacedHandler({
   const orderModuleService: IOrderModuleService = container.resolve(
     Modules.ORDER
   );
-  const eventModuleService = container.resolve(Modules.EVENT_BUS);
   const query = container.resolve(ContainerRegistrationKeys.QUERY);
 
   const order = await orderModuleService.retrieveOrder(data.id, {
@@ -25,11 +24,6 @@ export default async function orderPlacedHandler({
   const shippingAddress = await (
     orderModuleService as any
   ).orderAddressService_.retrieve(order.shipping_address.id);
-
-  const productEventMap: Record<string, string> = {
-    Vinilos: "vinyl_ordered",
-    Baterias: "battery_ordered",
-  };
 
   try {
     const { data: orders } = await query.graph({
@@ -46,8 +40,6 @@ export default async function orderPlacedHandler({
         (payment) => payment.provider_id === "pp_system_default"
       )
     );
-    console.log("isCashOnDelivery", isCashOnDelivery);
-    console.log("payment", payment);
 
     if (!isCashOnDelivery) {
       await notificationModuleService.createNotifications({
@@ -65,14 +57,20 @@ export default async function orderPlacedHandler({
         },
       });
 
-      // for (const [productType, eventName] of Object.entries(productEventMap)) {
-      //   if (order.items.some((item) => item.product_type === productType)) {
-      //     await eventModuleService.emit({
-      //       name: eventName,
-      //       data: { order_id: order.id },
-      //     });
-      //   }
-      // }
+      await notificationModuleService.createNotifications({
+        to: "alejandro@myurbanscoot.com",
+        channel: "email",
+        template: EmailTemplates.ORDER_PLACED_ADMIN,
+        data: {
+          emailOptions: {
+            replyTo: "info@myurbanscoot.com",
+            subject: "Se ha realizado un pedido",
+          },
+          order,
+          shippingAddress,
+          preview: "Se ha realizado un pedido",
+        },
+      });
     }
   } catch (error) {
     console.error("Error sending order confirmation notification:", error);

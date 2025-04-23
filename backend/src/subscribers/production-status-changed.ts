@@ -74,13 +74,15 @@ export default async function handleProductionStatusChanged({
         status_display:
           statusDisplayMap[status] || order.metadata?.production_status_display,
         status_message:
-          statusMessages[status] || "Tu pedido ha cambiado de estado",
+          status === "espera_stock"
+            ? statusMessages[status]
+            : statusMessages[status] || "Tu pedido ha cambiado de estado",
         order_items: order.items.map((item) => ({
           title: item.title,
           quantity: item.quantity,
         })),
         previous_status: previous_status
-          ? (statusMessages as any)[previous_status] || previous_status
+          ? statusDisplayMap[previous_status] || previous_status
           : "Estado inicial",
       },
     });

@@ -23,9 +23,11 @@ export default async function CodOrderPlacedHandler({
   }
 
   // 2) Envía el correo de "Order Placed"
-  const shippingAddress = await (orderService as any).orderAddressService_.retrieve(
-    order.shipping_address.id
-  );
+  const shippingAddress = await (
+    orderService as any
+  ).orderAddressService_.retrieve(order.shipping_address.id);
+
+  console.log("O R D E R E M A I L", order);
   await notificationService.createNotifications({
     to: order.email,
     channel: "email",
@@ -40,7 +42,6 @@ export default async function CodOrderPlacedHandler({
       preview: "Thank you for your order!",
     },
   });
-
 }
 
 export const config: SubscriberConfig = {

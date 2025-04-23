@@ -30,8 +30,22 @@ export default async function handleOrderNextSteps({
 
   console.log(`Order ${data.id} next stepsSDASDASDDSSDASD`);
 
-  // 2) Check backorder + sin stock
-
+  if (name === "order.placed") {
+    // comprobamos si hay algún pago COD pendiente
+    const { data: orders } = await query.graph({
+      entity: "order",
+      filters: { id: order.id },
+      fields: ["payment_collections.payments.provider_id"],
+    });
+    const isCOD = orders[0].payment_collections.some((pc: any) =>
+      pc.payments?.some((p: any) => p.provider_id === "pp_system_default")
+    );
+    if (isCOD) {
+      console.log(`Order ${order.id} es COD, esperamos confirmación.`);
+      return;
+    }
+  }
+  console.log(`Order ${order.id} next steps (${name})`);
   try {
     let needsStock = false;
     for (const item of order.items) {
@@ -55,7 +69,7 @@ export default async function handleOrderNextSteps({
         break;
       }
     }
-
+    console.log("needsStock", needsStock);
     if (needsStock) {
       // dispara el flujo de espera de stock
       await eventBus.emit({
@@ -67,6 +81,8 @@ export default async function handleOrderNextSteps({
       });
     } else {
       // sin backorder, dispara producción según tipos en la orden
+
+      console.log("EL ELSE DEBE DISPARAR PRODUCCION");
       const mapEvt: Record<
         string,
         { name: string; status: string; type: string }
@@ -89,6 +105,7 @@ export default async function handleOrderNextSteps({
       )) {
         const cfg = mapEvt[productType];
         if (cfg) {
+          console.log("cfg", cfg);
           await eventBus.emit({
             name: cfg.name,
             data: {
